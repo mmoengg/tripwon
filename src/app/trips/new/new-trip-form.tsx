@@ -9,13 +9,15 @@ const label = "text-sm font-medium text-neutral-700";
 
 export function NewTripForm() {
   const [state, formAction, pending] = useActionState<TripFormState, FormData>(createTrip, {});
-  const [currency, setCurrency] = useState<string>(CURRENCIES[0].code);
+  const v = state.values;
+  // select는 비제어(defaultValue)로 두고, "1 JPY =" 표시용으로만 상태를 따로 둠
+  const [currency, setCurrency] = useState<string>(v?.currency ?? CURRENCIES[0].code);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <label htmlFor="name" className={label}>여행 이름</label>
-        <input id="name" name="name" required maxLength={50} placeholder="오사카 3박 4일" className={field} />
+        <input id="name" name="name" required maxLength={50} defaultValue={v?.name} placeholder="오사카 3박 4일" className={field} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -23,7 +25,7 @@ export function NewTripForm() {
         <select
           id="currency"
           name="currency"
-          value={currency}
+          defaultValue={v?.currency ?? CURRENCIES[0].code}
           onChange={(e) => setCurrency(e.target.value)}
           className={`${field} bg-white`}
         >
@@ -44,6 +46,7 @@ export function NewTripForm() {
             name="rate_krw"
             required
             inputMode="decimal"
+            defaultValue={v?.rate_krw}
             placeholder="0.00"
             className={`${field} text-right`}
           />
@@ -59,11 +62,11 @@ export function NewTripForm() {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="start_date" className={label}>시작일</label>
-          <input id="start_date" name="start_date" type="date" className={field} />
+          <input id="start_date" name="start_date" type="date" defaultValue={v?.start_date} className={field} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="end_date" className={label}>종료일</label>
-          <input id="end_date" name="end_date" type="date" className={field} />
+          <input id="end_date" name="end_date" type="date" defaultValue={v?.end_date} className={field} />
         </div>
       </div>
 
