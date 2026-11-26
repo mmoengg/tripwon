@@ -65,11 +65,11 @@ const PATHS: Record<string, React.ReactNode> = {
   ),
 };
 
-export function CategoryIcon({ category, size = 36 }: { category: string; size?: number }) {
+export function CategoryIcon({ category, size = 36, round = false }: { category: string; size?: number; round?: boolean }) {
   const s = STYLES[category] ?? STYLES.etc;
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-lg"
+      className={`flex shrink-0 items-center justify-center ${round ? "rounded-full" : "rounded-lg"}`}
       style={{ width: size, height: size, background: s.bg, color: s.fg }}
       aria-hidden="true"
     >

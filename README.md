@@ -14,7 +14,8 @@
 - **요약**: 총액, 현지/선결제 비율, 하루 평균, 카테고리별·결제 수단별 합계를 보여줘요.
 - **CSV 내보내기**: 엑셀에서 열어도 한글이 깨지지 않아요.
 - **홈 화면에 추가 (PWA)**: 폰에서 앱처럼 전체 화면으로 열려요.
-- **로그인**: 구글 또는 이메일 링크로 해요. 각자 자기 데이터만 볼 수 있어요(Supabase RLS).
+- **로그인**: 구글 계정으로 해요. 각자 자기 여행만 볼 수 있어요(Supabase RLS).
+- **동행자 공유**: 초대 링크로 같이 기록하고, 지출마다 낸 사람·나눌 사람을 정해 **정산**(최소 송금 목록, 송금 완료 체크)까지 해요.
 
 ## 환율 계산 방식
 
@@ -37,8 +38,8 @@
 ## 기술 스택
 
 - **Next.js 16** (App Router, TypeScript, Cache Components, `proxy.ts`)
-- **Tailwind CSS v4**, Pretendard
-- **Supabase**: Postgres + Auth(구글 OAuth, 이메일 매직링크) + RLS, `@supabase/ssr`
+- **Tailwind CSS v4**, Pretendard·나눔명조 (npm 패키지로 직접 포함)
+- **Supabase**: Postgres + Auth(구글 OAuth) + RLS, `@supabase/ssr`
 - **Vercel**: 호스팅 + Cron
 - 환율: [ExchangeRate-API](https://www.exchangerate-api.com) 무료 엔드포인트 (출처 표기 필수, 새 여행 폼에 표시)
 

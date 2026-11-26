@@ -5,6 +5,7 @@ import type { ExpenseFormState, ExpenseFormValues } from "../../../expense-actio
 import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
 import { DOMESTIC_METHODS, PAYMENT_METHODS } from "@/lib/payment-methods";
 import { AmountInput } from "@/components/amount-input";
+import { CategoryIcon } from "@/components/category-icon";
 
 // bg-field(순백)·border-field-line: 바탕(paper) 위에서 입력 칸이 확실히 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
 const field = "h-12 w-full min-w-0 rounded-xl border border-field-line bg-field px-4 text-base text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20";
@@ -248,7 +249,7 @@ function CategoryChips({
   items,
   defaultValue,
 }: {
-  items: readonly { value: string; label: string; emoji: string }[];
+  items: readonly { value: string; label: string }[];
   defaultValue: string;
 }) {
   return (
@@ -262,8 +263,8 @@ function CategoryChips({
             defaultChecked={c.value === defaultValue}
             className="peer sr-only"
           />
-          <span className="flex h-9 items-center gap-1 rounded-full border border-field-line bg-field px-3 text-sm peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
-            <span aria-hidden>{c.emoji}</span>
+          <span className="flex h-10 items-center gap-1.5 rounded-full border border-field-line bg-field pr-3.5 pl-1.5 text-sm peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
+            <CategoryIcon category={c.value} size={26} round />
             {c.label}
           </span>
         </label>

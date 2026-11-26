@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// 구글 로그인 / 이메일 매직링크가 돌아오는 곳: code → 세션 교환
+// 구글 로그인이 돌아오는 곳: code → 세션 교환
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");

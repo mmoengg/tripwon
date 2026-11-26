@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from "next";
+// 폰트는 npm 패키지로 직접 포함 (CDN 링크 없이 우리 서버에서 제공)
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css"; // 본문
+import "@fontsource/nanum-myeongjo/700.css"; // 제목·큰 금액 (font-serif)
+import "@fontsource/nanum-myeongjo/800.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,21 +23,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        {/* 제목·큰 금액용 명조체 (globals.css의 --font-serif) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* App Router의 루트 layout이라 모든 페이지에 적용됨 (이 규칙은 pages/_document 기준이라 해당 없음) */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap"
-        />
-      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

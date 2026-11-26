@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExpenses, getMembers, getTrip, type ExpenseRow } from "@/lib/trips";
 import { CATEGORIES } from "@/lib/categories";
+import { CategoryIcon } from "@/components/category-icon";
 import { DOMESTIC_METHODS, PAYMENT_METHODS } from "@/lib/payment-methods";
 import { formatKrw, formatTripRange } from "@/lib/format";
 
@@ -16,12 +17,18 @@ export default function SummaryPage({ params }: PageProps<"/trips/[id]/summary">
   );
 }
 
-type Row = { key: string; label: string; emoji?: string; krw: number; count: number };
+type Row = { key: string; label: string; icon: boolean; krw: number; count: number };
 
 // 같은 키끼리 원화 합계·건수를 모으고 큰 순으로 정렬. 0원 항목은 뺌
-function groupBy(expenses: ExpenseRow[], keyOf: (e: ExpenseRow) => string, meta: { value: string; label: string; emoji?: string }[]): Row[] {
+// icon: 카테고리별이면 선 아이콘 표시
+function groupBy(
+  expenses: ExpenseRow[],
+  keyOf: (e: ExpenseRow) => string,
+  meta: { value: string; label: string }[],
+  icon = false,
+): Row[] {
   const map = new Map<string, Row>();
-  for (const m of meta) map.set(m.value, { key: m.value, label: m.label, emoji: m.emoji, krw: 0, count: 0 });
+  for (const m of meta) map.set(m.value, { key: m.value, label: m.label, icon, krw: 0, count: 0 });
   for (const e of expenses) {
     const r = map.get(keyOf(e));
     if (!r) continue;
@@ -52,7 +59,7 @@ async function Summary({ id }: { id: string }) {
   const perDay = days > 0 ? localTotal / days : 0;
   const estimated = expenses.filter((e) => e.rate_source === "trip");
 
-  const byCategory = groupBy(expenses, (e) => e.category, CATEGORIES);
+  const byCategory = groupBy(expenses, (e) => e.category, CATEGORIES, true);
   // 국내 여행은 카드/현금 두 가지로 묶음 (충전카드도 카드로)
   const domestic = trip.currency === "KRW";
   const byMethod = domestic
@@ -140,11 +147,11 @@ function BarList({ title, rows, total }: { title: string; rows: Row[]; total: nu
           const pct = total > 0 ? Math.round((r.krw / total) * 100) : 0;
           return (
             <li key={r.key} className="flex flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate">
-                  {r.emoji && <span aria-hidden className="mr-1">{r.emoji}</span>}
-                  {r.label}
-                  <span className="ml-1 text-xs text-muted">{r.count}건</span>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
+                  {r.icon && <CategoryIcon category={r.key} size={24} round />}
+                  <span className="truncate">{r.label}</span>
+                  <span className="shrink-0 text-xs text-muted">{r.count}건</span>
                 </span>
                 <span className="shrink-0 tabular-nums">
                   {formatKrw(r.krw)}
