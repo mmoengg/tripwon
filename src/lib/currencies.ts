@@ -12,7 +12,11 @@ export const CURRENCIES = [
   { code: "PHP", name: "필리핀 페소" },
   { code: "GBP", name: "영국 파운드" },
   { code: "AUD", name: "호주 달러" },
+  // 국내 여행: 원화 그대로 (새 여행 폼에서는 '국내 여행' 토글로 고름)
+  { code: "KRW", name: "국내 여행" },
 ] as const;
+
+export const isDomestic = (code: string) => code === "KRW";
 
 export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
 

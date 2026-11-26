@@ -51,7 +51,7 @@ function LoginForm() {
       <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6">
         <header className="space-y-2 text-center">
           <h1 className="text-2xl font-semibold">tripwon</h1>
-          <p className="text-sm text-neutral-500">어디서 얼마 썼는지, 원화로 한눈에</p>
+          <p className="text-sm text-muted">어디서 얼마 썼는지, 원화로 한눈에</p>
         </header>
 
         {authError && (
@@ -64,19 +64,19 @@ function LoginForm() {
             type="button"
             onClick={loginWithGoogle}
             disabled={googleLoading}
-            className="h-12 rounded-xl border border-neutral-200 bg-white font-medium text-neutral-900 hover:bg-neutral-50 disabled:opacity-50"
+            className="h-12 rounded-xl border border-line bg-card font-medium text-ink hover:bg-paper disabled:opacity-50"
         >
           {googleLoading ? "구글로 이동 중…" : "Google로 계속하기"}
         </button>
 
-        <div className="flex items-center gap-3 text-xs text-neutral-400">
-          <span className="h-px flex-1 bg-neutral-200" />
+        <div className="flex items-center gap-3 text-xs text-muted">
+          <span className="h-px flex-1 bg-line" />
           또는 이메일로
-          <span className="h-px flex-1 bg-neutral-200" />
+          <span className="h-px flex-1 bg-line" />
         </div>
 
         {status === "sent" ? (
-            <p className="rounded-xl bg-neutral-100 p-4 text-center text-sm">
+            <p className="rounded-xl bg-line-soft p-4 text-center text-sm">
               📮 <b>{email}</b> 으로 로그인 링크를 보냈어요.
               <br />
               메일함을 확인해주세요.
@@ -89,11 +89,11 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="h-12 rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400"
+                  className="h-12 min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent"
               />
               <button
                   disabled={status === "sending"}
-                  className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50"
+                  className="h-12 rounded-xl bg-accent font-semibold text-white disabled:opacity-50"
               >
                 {status === "sending" ? "보내는 중…" : "로그인 링크 받기"}
               </button>

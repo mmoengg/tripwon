@@ -63,7 +63,8 @@ export async function createTrip(_prev: TripFormState, formData: FormData): Prom
   if (!supabase) return { error: "로그인이 필요해요.", values };
 
   if (!isCurrencyCode(values.currency)) return { error: "통화를 목록에서 골라주세요.", values };
-  const r = validateFields(values);
+  // 국내 여행(KRW)은 환율이 항상 1
+  const r = validateFields(values.currency === "KRW" ? { ...values, rate_krw: "1" } : values);
   if ("error" in r) return { error: r.error, values };
 
   // user_id는 DB 기본값 auth.uid()로 채워지고, RLS가 본인 것만 허용
@@ -87,7 +88,7 @@ export async function updateTrip(
   const trip = await getTrip(tripId);
   if (!trip) return { error: "여행을 찾을 수 없어요.", values };
 
-  const r = validateFields(values);
+  const r = validateFields(trip.currency === "KRW" ? { ...values, rate_krw: "1" } : values);
   if ("error" in r) return { error: r.error, values };
 
   const { data, error } = await supabase.from("trips").update(r.row).eq("id", trip.id).select("id");

@@ -10,7 +10,7 @@ import { deleteTrip, updateTrip } from "../../actions";
 export default function EditTripPage({ params }: PageProps<"/trips/[id]/edit">) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-neutral-100" />}>
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
         {params.then(({ id }) => <EditTrip id={id} />)}
       </Suspense>
     </main>
@@ -27,7 +27,7 @@ async function EditTrip({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-neutral-500">← {trip.name}</Link>
+      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
       <h1 className="text-2xl font-semibold">여행 수정</h1>
       <ResetOnLeave>
         <TripForm

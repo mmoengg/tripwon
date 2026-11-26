@@ -10,7 +10,7 @@ import { createExpense } from "../../../expense-actions";
 export default function NewExpensePage({ params }: PageProps<"/trips/[id]/expenses/new">) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-neutral-100" />}>
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
         {params.then(({ id }) => <NewExpense id={id} />)}
       </Suspense>
     </main>
@@ -22,7 +22,7 @@ async function NewExpense({ id }: { id: string }) {
   if (!trip) notFound();
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-neutral-500">← {trip.name}</Link>
+      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
       <h1 className="text-2xl font-semibold">지출 추가</h1>
       <ResetOnLeave>
         <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} />

@@ -5,8 +5,9 @@ import type { ExchangeFormState, ExchangeFormValues } from "../../../exchange-ac
 import { formatRate } from "@/lib/format";
 import { AmountInput } from "@/components/amount-input";
 
-const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
-const label = "text-sm font-medium text-neutral-700";
+// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+const label = "text-sm font-medium text-ink";
 const toNum = (s: string) => Number(s.replaceAll(",", "").trim());
 
 type Props = {
@@ -32,7 +33,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
     <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="kind" value={kind} />
 
-      <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-neutral-100 p-1" role="radiogroup">
+      <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line-soft p-1" role="radiogroup">
         {[
           { value: "prepaid", label: "충전카드 충전" },
           { value: "cash", label: "현금 환전" },
@@ -43,7 +44,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
             role="radio"
             aria-checked={kind === o.value}
             onClick={() => setKind(o.value)}
-            className={`rounded-lg text-sm font-medium ${kind === o.value ? "bg-white shadow-sm" : "text-neutral-500"}`}
+            className={`rounded-lg text-sm font-medium ${kind === o.value ? "bg-card shadow-sm" : "text-muted"}`}
           >
             {o.label}
           </button>
@@ -58,7 +59,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
             defaultValue={v?.krw_amount} onValueChange={setKrw}
             placeholder="100,000" className={`${field} text-right tabular-nums`}
           />
-          <span className="w-10 shrink-0 text-sm text-neutral-500">원</span>
+          <span className="w-10 shrink-0 text-sm text-muted">원</span>
         </div>
       </div>
 
@@ -70,9 +71,9 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
             defaultValue={v?.foreign_amount} onValueChange={setForeign}
             placeholder="0" className={`${field} text-right tabular-nums`}
           />
-          <span className="w-10 shrink-0 text-sm text-neutral-500">{currency}</span>
+          <span className="w-10 shrink-0 text-sm text-muted">{currency}</span>
         </div>
-        <p className="text-xs text-neutral-400 tabular-nums">
+        <p className="text-xs text-muted tabular-nums">
           {Number.isFinite(rate) && rate > 0
             ? `적용 환율 1 ${currency} = ${formatRate(rate)}원`
             : "두 금액을 넣으면 환율이 계산돼요."}
@@ -88,7 +89,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
         <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600" aria-live="polite">{state.error}</p>
       )}
 
-      <button disabled={pending} className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50">
+      <button disabled={pending} className="h-12 rounded-xl bg-accent font-semibold text-white disabled:opacity-50">
         {pending ? "저장 중…" : isEdit ? "수정 저장" : "저장"}
       </button>
     </form>

@@ -31,7 +31,7 @@ export function ConfirmDeleteButton({ label, message, action }: Props) {
           type="button"
           onClick={() => setArmed(false)}
           disabled={pending}
-          className="h-11 rounded-lg bg-white text-sm font-medium"
+          className="h-11 rounded-lg bg-card text-sm font-medium"
         >
           취소
         </button>

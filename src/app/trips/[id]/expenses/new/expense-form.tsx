@@ -6,8 +6,9 @@ import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { AmountInput } from "@/components/amount-input";
 
-const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
-const label = "text-sm font-medium text-neutral-700";
+// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+const label = "text-sm font-medium text-ink";
 
 type Props = {
   // 서버 페이지에서 id를 bind해서 넘겨줌 (createExpense 또는 updateExpense)
@@ -28,6 +29,8 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
   const [paidWhere, setPaidWhere] = useState(v?.paid_where ?? "local");
   const [currency, setCurrency] = useState(v?.currency ?? tripCurrency);
   const [method, setMethod] = useState(v?.method ?? "prepaid");
+  // 국내 여행(KRW): 결제 장소·통화 선택이 필요 없고, 환전 설명도 숨김
+  const domestic = tripCurrency === "KRW";
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -35,6 +38,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
       <input type="hidden" name="currency" value={currency} />
       <input type="hidden" name="method" value={method} />
 
+      {!domestic && (
       <div className="flex flex-col gap-2">
         <span className={label}>어디서 결제했나요?</span>
         <Segmented
@@ -50,6 +54,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
           }}
         />
       </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="amount" className={label}>금액</label>
@@ -64,27 +69,31 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
             placeholder="0"
             className={`${field} text-right text-lg tabular-nums`}
           />
-          <Segmented
-            value={currency}
-            options={[
-              { value: tripCurrency, label: tripCurrency },
-              { value: "KRW", label: "KRW" },
-            ]}
-            onChange={setCurrency}
-            className="w-36 shrink-0"
-          />
+          {domestic ? (
+            <span className="flex h-12 shrink-0 items-center px-1 text-base text-muted">원</span>
+          ) : (
+            <Segmented
+              value={currency}
+              options={[
+                { value: tripCurrency, label: tripCurrency },
+                { value: "KRW", label: "KRW" },
+              ]}
+              onChange={setCurrency}
+              className="w-36 shrink-0"
+            />
+          )}
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="title" className={label}>내용</label>
-        <input id="title" name="title" required maxLength={60} defaultValue={v?.title} placeholder="이치란 라멘" className={field} />
+        <input id="title" name="title" required maxLength={60} defaultValue={v?.title} placeholder={domestic ? "흑돼지 구이" : "이치란 라멘"} className={field} />
       </div>
 
       <fieldset className="flex flex-col gap-2">
         <legend className={`${label} mb-2`}>카테고리</legend>
         <CategoryChips items={LOCAL_CATEGORIES} defaultValue={v?.category ?? "food"} />
-        <p className="mt-1 text-xs text-neutral-400">예약·결제</p>
+        <p className="mt-1 text-xs text-muted">예약·결제</p>
         <CategoryChips items={BOOKING_CATEGORIES} defaultValue={v?.category ?? "food"} />
       </fieldset>
 
@@ -95,15 +104,15 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
           options={PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label }))}
           onChange={setMethod}
         />
-        <p className="text-xs text-neutral-400">
-          {PAYMENT_METHODS.find((m) => m.value === method)?.hint}
-        </p>
+        {!domestic && (
+          <p className="text-xs text-muted">{PAYMENT_METHODS.find((m) => m.value === method)?.hint}</p>
+        )}
       </div>
 
       {method === "credit" && currency !== "KRW" && (
-        <div className="flex flex-col gap-2 rounded-xl bg-neutral-50 p-4">
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-chip p-4">
           <label htmlFor="amount_krw_actual" className={label}>
-            명세서 실제 금액 <span className="font-normal text-neutral-400">(선택)</span>
+            명세서 실제 금액 <span className="font-normal text-muted">(선택)</span>
           </label>
           <div className="flex items-center gap-2">
             <AmountInput
@@ -111,11 +120,11 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
               name="amount_krw_actual"
               defaultValue={v?.amount_krw_actual}
               placeholder="카드사 청구 원화"
-              className={`${field} bg-white text-right tabular-nums`}
+              className={`${field} bg-card text-right tabular-nums`}
             />
-            <span className="shrink-0 text-sm text-neutral-500">원</span>
+            <span className="shrink-0 text-sm text-muted">원</span>
           </div>
-          <p className="text-xs text-neutral-400">비워두면 여행 기본 환율로 예상 금액을 계산해요.</p>
+          <p className="text-xs text-muted">비워두면 여행 기본 환율로 예상 금액을 계산해요.</p>
         </div>
       )}
 
@@ -130,7 +139,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
         <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600" aria-live="polite">{state.error}</p>
       )}
 
-      <button disabled={pending} className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50">
+      <button disabled={pending} className="h-12 rounded-xl bg-accent font-semibold text-white disabled:opacity-50">
         {pending ? "저장 중…" : isEdit ? "수정 저장" : "저장"}
       </button>
     </form>
@@ -156,7 +165,7 @@ function CategoryChips({
             defaultChecked={c.value === defaultValue}
             className="peer sr-only"
           />
-          <span className="flex h-9 items-center gap-1 rounded-full border border-neutral-200 px-3 text-sm peer-checked:border-neutral-900 peer-checked:bg-neutral-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-neutral-400">
+          <span className="flex h-9 items-center gap-1 rounded-full border border-line px-3 text-sm peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
             <span aria-hidden>{c.emoji}</span>
             {c.label}
           </span>
@@ -178,7 +187,7 @@ function Segmented({
   className?: string;
 }) {
   return (
-    <div className={`grid h-12 grid-flow-col auto-cols-fr gap-1 rounded-xl bg-neutral-100 p-1 ${className}`} role="radiogroup">
+    <div className={`grid h-12 grid-flow-col auto-cols-fr gap-1 rounded-xl bg-line-soft p-1 ${className}`} role="radiogroup">
       {options.map((o) => (
         <button
           key={o.value}
@@ -187,7 +196,7 @@ function Segmented({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={`rounded-lg text-sm font-medium ${
-            value === o.value ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"
+            value === o.value ? "bg-card text-ink shadow-sm" : "text-muted"
           }`}
         >
           {o.label}

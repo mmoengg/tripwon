@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExchanges, getExpenses, getTrip, getWallet, type ExchangeRow, type Trip, type Wallet } from "@/lib/trips";
-import { currencyName, currencySymbol } from "@/lib/currencies";
+import { currencyName, currencySymbol, isDomestic } from "@/lib/currencies";
 import { formatAmount, formatKrw, formatRate, formatTripRange } from "@/lib/format";
 import { ExpenseList } from "./expense-list";
 
@@ -62,18 +62,20 @@ function Postcard({ trip }: { trip: Trip }) {
       <div className="flex items-start justify-between gap-3 rounded-md bg-card px-[18px] py-4">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-xs tracking-[2px] text-muted">
-            {trip.currency} · {currencyName(trip.currency)}
+            {isDomestic(trip.currency) ? "국내 여행" : `${trip.currency} · ${currencyName(trip.currency)}`}
           </span>
           <h1 className="font-serif text-[25px] font-extrabold tracking-tight break-keep">{trip.name}</h1>
           <span className="text-[13px] text-muted">{formatTripRange(trip.start_date, trip.end_date)}</span>
         </div>
         <div
           className="flex h-[62px] w-[54px] shrink-0 rotate-[4deg] flex-col items-center justify-center rounded border-2 border-dashed border-stamp text-stamp-ink"
-          aria-label={`기본 환율 1 ${trip.currency} = ${formatRate(trip.rate_krw)}원`}
+          aria-label={isDomestic(trip.currency) ? "국내 여행" : `기본 환율 1 ${trip.currency} = ${formatRate(trip.rate_krw)}원`}
           role="img"
         >
           <span className="font-serif text-[21px] font-extrabold leading-none">{currencySymbol(trip.currency)}</span>
-          <span className="mt-1 text-[11px] font-semibold">{formatRate(trip.rate_krw)}</span>
+          <span className="mt-1 text-[11px] font-semibold">
+            {isDomestic(trip.currency) ? "국내" : formatRate(trip.rate_krw)}
+          </span>
         </div>
       </div>
     </div>
@@ -113,6 +115,9 @@ function MoneyCard({
         )}
       </div>
 
+      {/* 국내 여행은 환전·잔액이 없음 → 총 지출만 */}
+      {!isDomestic(trip.currency) && (
+      <>
       {/* 티켓 절취선: 양 끝 반원은 바탕색으로 뚫린 구멍처럼 */}
       <div className="-mx-7 my-0.5 flex items-center" aria-hidden="true">
         <span className="size-5 shrink-0 rounded-full bg-paper" />
@@ -179,6 +184,8 @@ function MoneyCard({
             + 충전
           </Link>
         </div>
+      )}
+      </>
       )}
     </section>
   );

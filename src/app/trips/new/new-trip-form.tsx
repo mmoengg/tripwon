@@ -3,10 +3,14 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { fetchDefaultRate, type TripFormState, type TripFormValues } from "../actions";
 import { CURRENCIES } from "@/lib/currencies";
+
+// 해외 여행 통화 목록 (KRW = 국내 여행은 따로 토글로 고름)
+const OVERSEAS = CURRENCIES.filter((c) => c.code !== "KRW");
 import { AmountInput, formatAmountInput } from "@/components/amount-input";
 
-const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
-const label = "text-sm font-medium text-neutral-700";
+// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+const label = "text-sm font-medium text-ink";
 
 type Props = {
   // 서버 페이지에서 넘겨줌 (createTrip 또는 updateTrip.bind(null, id))
@@ -21,7 +25,11 @@ export function TripForm({ action, initial }: Props) {
   // 에러로 돌아온 값 > 원래 값 > 빈 값
   const v = state.values ?? initial;
   // select는 비제어(defaultValue)로 두고, "1 JPY =" 표시용으로만 상태를 따로 둠
-  const [currency, setCurrency] = useState<string>(v?.currency ?? CURRENCIES[0].code);
+  const [currency, setCurrency] = useState<string>(v?.currency ?? OVERSEAS[0].code);
+  // 국내 여행 = 원화(KRW) 여행: 환율 1로 고정, 환율·환전 관련 UI는 숨김
+  const domestic = currency === "KRW";
+  // 국내 ↔ 해외를 오갈 때 마지막으로 고른 해외 통화를 기억
+  const lastOverseas = useRef(domestic ? OVERSEAS[0].code : currency);
 
   // 환율 칸은 비제어로 두고 ref로 값만 채움 (폼 초기화와 충돌하지 않게)
   const rateRef = useRef<HTMLInputElement>(null);
@@ -32,7 +40,7 @@ export function TripForm({ action, initial }: Props) {
   >(null);
 
   useEffect(() => {
-    if (rateTouched.current) return;
+    if (domestic || rateTouched.current) return;
     let cancelled = false;
     setRateInfo({ status: "loading" });
     fetchDefaultRate(currency).then((r) => {
@@ -45,15 +53,54 @@ export function TripForm({ action, initial }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [currency]);
+  }, [currency, domestic]);
+
+  function pickKind(toDomestic: boolean) {
+    if (toDomestic === domestic) return;
+    rateTouched.current = false;
+    setRateInfo(null);
+    setCurrency(toDomestic ? "KRW" : lastOverseas.current);
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <label htmlFor="name" className={label}>여행 이름</label>
-        <input id="name" name="name" required maxLength={50} defaultValue={v?.name} placeholder="오사카 3박 4일" className={field} />
+        <input id="name" name="name" required maxLength={50} defaultValue={v?.name} placeholder={domestic ? "제주 2박 3일" : "오사카 3박 4일"} className={field} />
       </div>
 
+      {!isEdit && (
+        <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line-soft p-1" role="radiogroup" aria-label="여행 종류">
+          {[
+            { value: false, label: "해외 여행" },
+            { value: true, label: "국내 여행" },
+          ].map((o) => (
+            <button
+              key={o.label}
+              type="button"
+              role="radio"
+              aria-checked={domestic === o.value}
+              onClick={() => pickKind(o.value)}
+              className={`rounded-lg text-sm font-medium ${domestic === o.value ? "bg-card text-ink shadow-sm" : "text-muted"}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {domestic && (
+        <>
+          <input type="hidden" name="currency" value="KRW" />
+          <input type="hidden" name="rate_krw" value="1" />
+          <p className="-mt-2 text-xs text-muted">
+            {isEdit ? "국내 여행이에요. 모든 금액을 원화로 적어요." : "모든 금액을 원화로 적어요. 환율·환전 기록은 필요 없어요."}
+          </p>
+        </>
+      )}
+
+      {!domestic && (
+        <>
       <div className="flex flex-col gap-2">
         <label htmlFor="currency" className={label}>현지 통화</label>
         {/* 수정 모드에선 select가 disabled라 값이 전송되지 않으므로 hidden으로 보냄 (서버는 무시함) */}
@@ -62,29 +109,30 @@ export function TripForm({ action, initial }: Props) {
           disabled={isEdit}
           id="currency"
           name="currency"
-          defaultValue={v?.currency ?? CURRENCIES[0].code}
+          defaultValue={currency}
           onChange={(e) => {
             // 통화가 바뀌면 이전 통화 기준 환율은 의미 없음 → 새 기본값으로 다시 채움
             rateTouched.current = false;
+            lastOverseas.current = e.target.value;
             setCurrency(e.target.value);
           }}
-          className={`${field} bg-white disabled:bg-neutral-50 disabled:text-neutral-500`}
+          className={`${field} bg-card disabled:bg-paper disabled:text-muted`}
         >
-          {CURRENCIES.map((c) => (
+          {OVERSEAS.map((c) => (
             <option key={c.code} value={c.code}>
               {c.code} · {c.name}
             </option>
           ))}
         </select>
         {isEdit && (
-          <p className="text-xs text-neutral-400">이미 적은 지출·환전 금액이 꼬이지 않게 통화는 바꿀 수 없어요.</p>
+          <p className="text-xs text-muted">이미 적은 지출·환전 금액이 꼬이지 않게 통화는 바꿀 수 없어요.</p>
         )}
       </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="rate_krw" className={label}>환율</label>
         <div className="flex items-center gap-2">
-          <span className="shrink-0 text-sm text-neutral-500">1 {currency} =</span>
+          <span className="shrink-0 text-sm text-muted">1 {currency} =</span>
           <AmountInput
             id="rate_krw"
             name="rate_krw"
@@ -99,9 +147,9 @@ export function TripForm({ action, initial }: Props) {
             placeholder="0.00"
             className={`${field} text-right`}
           />
-          <span className="shrink-0 text-sm text-neutral-500">원</span>
+          <span className="shrink-0 text-sm text-muted">원</span>
         </div>
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-muted">
           {rateInfo?.status === "loading" && "오늘 환율 불러오는 중…"}
           {rateInfo?.status === "ok" && (
             <>
@@ -122,6 +170,9 @@ export function TripForm({ action, initial }: Props) {
         </p>
       </div>
 
+        </>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="start_date" className={label}>시작일</label>
@@ -141,7 +192,7 @@ export function TripForm({ action, initial }: Props) {
 
       <button
         disabled={pending}
-        className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50"
+        className="h-12 rounded-xl bg-accent font-semibold text-white disabled:opacity-50"
       >
         {pending ? "저장 중…" : isEdit ? "수정 저장" : "여행 만들기"}
       </button>

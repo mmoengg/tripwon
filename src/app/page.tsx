@@ -27,9 +27,9 @@ async function TripList() {
 
   if (!data.length) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-neutral-200 px-6 py-12 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
         <p className="font-medium">아직 여행이 없어요</p>
-        <p className="text-sm text-neutral-500">첫 여행을 만들고 지출을 기록해보세요.</p>
+        <p className="text-sm text-muted">첫 여행을 만들고 지출을 기록해보세요.</p>
       </div>
     );
   }
@@ -38,14 +38,14 @@ async function TripList() {
     <ul className="flex flex-col gap-3">
       {data.map((t) => (
         <li key={t.id}>
-          <Link href={`/trips/${t.id}`} className="block rounded-2xl border border-neutral-200 p-4 hover:bg-neutral-50">
+          <Link href={`/trips/${t.id}`} className="block rounded-2xl border border-line p-4 hover:bg-paper">
           <div className="flex items-start justify-between gap-3">
             <p className="font-medium">{t.name}</p>
-            <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+            <span className="shrink-0 rounded-full bg-line-soft px-2 py-0.5 text-xs text-muted">
               {t.currency}
             </span>
           </div>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted">
             {formatTripRange(t.start_date, t.end_date)} · {currencyName(t.currency)}
           </p>
           </Link>
@@ -59,7 +59,7 @@ function TripListSkeleton() {
   return (
     <ul className="flex flex-col gap-3" aria-hidden>
       {[0, 1].map((i) => (
-        <li key={i} className="h-[76px] animate-pulse rounded-2xl bg-neutral-100" />
+        <li key={i} className="h-[76px] animate-pulse rounded-2xl bg-line-soft" />
       ))}
     </ul>
   );
@@ -71,13 +71,13 @@ export default function Home() {
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">내 여행</h1>
         <form action="/auth/signout" method="post">
-          <button className="text-sm text-neutral-500 underline">로그아웃</button>
+          <button className="text-sm text-muted underline">로그아웃</button>
         </form>
       </header>
 
       <Link
         href="/trips/new"
-        className="flex h-12 items-center justify-center rounded-xl bg-neutral-900 font-medium text-white"
+        className="flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-white"
       >
         + 새 여행
       </Link>
