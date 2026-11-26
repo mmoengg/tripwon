@@ -5,7 +5,8 @@ import { getMembers, getMyUserId, getTrip } from "@/lib/trips";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ResetOnLeave } from "@/components/reset-on-leave";
-import { createInvite, disableInvite, leaveTrip, removeMember, renameMe } from "../../member-actions";
+import { createInvite, disableInvite, leaveTrip, removeMember, renameMe, setTreasurer } from "../../member-actions";
+import { TreasurerPicker } from "./treasurer-picker";
 import { InviteBox } from "./invite-box";
 import { RemoveMemberButton } from "./remove-member-button";
 import { RenameForm } from "./rename-form";
@@ -40,7 +41,10 @@ async function Members({ id }: { id: string }) {
                 {m.display_name}
                 {m.user_id === me && <span className="ml-1 text-xs font-normal text-muted">(나)</span>}
               </p>
-              <p className="text-xs text-muted">{m.role === "owner" ? "만든 사람" : "동행자"}</p>
+              <p className="text-xs text-muted">
+                {m.role === "owner" ? "만든 사람" : "동행자"}
+                {trip.treasurer_id === m.user_id && " · 공금 총무"}
+              </p>
             </div>
             {isOwner && m.role !== "owner" && (
               <RemoveMemberButton name={m.display_name} action={removeMember.bind(null, trip.id, m.user_id)} />
@@ -60,6 +64,10 @@ async function Members({ id }: { id: string }) {
         <p className="rounded-[14px] border border-dashed border-chip p-4 text-sm text-muted">
           초대 링크는 여행을 만든 사람이 보낼 수 있어요.
         </p>
+      )}
+
+      {isOwner && members.length > 1 && (
+        <TreasurerPicker members={members} current={trip.treasurer_id} action={setTreasurer.bind(null, trip.id)} />
       )}
 
       <ResetOnLeave>

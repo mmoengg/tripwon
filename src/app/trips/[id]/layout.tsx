@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { RefreshOnNavigate } from "@/components/refresh-on-navigate";
 
 // 여행 하위 화면(상세·지출·충전·요약·정산·멤버)을 묶는 레이아웃.
@@ -6,7 +7,10 @@ import { RefreshOnNavigate } from "@/components/refresh-on-navigate";
 export default function TripLayout({ children }: LayoutProps<"/trips/[id]">) {
   return (
     <>
-      <RefreshOnNavigate />
+      {/* usePathname은 요청마다 달라서 Suspense 안에 (cacheComponents 빌드 조건) */}
+      <Suspense fallback={null}>
+        <RefreshOnNavigate />
+      </Suspense>
       {children}
     </>
   );

@@ -69,6 +69,8 @@ Supabase **SQL Editor**에서 아래 파일을 **순서대로 한 번씩** 실�
 7. `supabase-07_settlement.sql`: 정산 — 지출마다 나눌 사람, 송금 완료 기록
 8. `supabase-08_fix_removed_member.sql`: 나간·내보낸 동행자의 지출도 정리(삭제·수정) 가능하게
 9. `supabase-09_split_all.sql`: '전원' 나누기 — 나중에 들어온 동행자도 정산에 포함
+10. `supabase-10_pool.sql`: 공금 — 총무, 공금 결제, 공금 입금
+11. `supabase-11_pool_wallet.sql`: 공금을 가상 지갑으로 — 공금 결제는 공금이 낸 돈, 입금·돌려주기는 공금과의 송금
 
 ### 4. 로그인 설정 (Supabase 대시보드)
 - **Authentication → URL Configuration**

@@ -21,9 +21,10 @@ type Props = {
   // 낸 사람 후보 (멤버). 2명 이상일 때만 고르는 칸이 보임
   members?: { user_id: string; display_name: string }[];
   me?: string | null;
+  treasurerId?: string | null; // 공금 총무 (있으면 '공금' 선택지가 생김)
 };
 
-export function ExpenseForm({ action, tripCurrency, today, initial, members = [], me = null }: Props) {
+export function ExpenseForm({ action, tripCurrency, today, initial, members = [], me = null, treasurerId = null }: Props) {
   const isEdit = !!initial;
   const [state, formAction, pending] = useActionState<ExpenseFormState, FormData>(action, {});
   // 에러로 돌아온 값 > 수정할 원래 값 > 빈 값
@@ -39,6 +40,8 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
     domestic ? (v?.method === "cash" ? "cash" : "credit") : (v?.method ?? "prepaid"),
   );
   const [paidBy, setPaidBy] = useState(v?.paid_by || me || "");
+  // 공금으로 냄: 낸 쪽은 공금 지갑 (DB가 paid_by를 비움)
+  const [fromPool, setFromPool] = useState(v?.from_pool === "1");
   // 나눌 사람 (정산). 기본은 멤버 전원
   const [splitWith, setSplitWith] = useState<string[]>(() => {
     const saved = (v?.split_with ?? "").split(",").filter(Boolean);
@@ -52,7 +55,8 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
       <input type="hidden" name="paid_where" value={paidWhere} />
       <input type="hidden" name="currency" value={currency} />
       <input type="hidden" name="method" value={method} />
-      <input type="hidden" name="paid_by" value={paidBy} />
+      <input type="hidden" name="paid_by" value={fromPool ? "" : paidBy} />
+      <input type="hidden" name="from_pool" value={fromPool ? "1" : "0"} />
       {members.length > 1 && (
         <>
           {/* 전원을 고르면 '전원'으로 저장 → 나중에 들어온 동행자도 정산에 포함 */}
@@ -65,15 +69,31 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
         <div className="flex flex-col gap-2">
           <span className={label}>누가 냈나요?</span>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="낸 사람">
+            {(treasurerId || v?.from_pool === "1") && (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={fromPool}
+                onClick={() => setFromPool(true)}
+                className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm ${
+                  fromPool ? "bg-stamp font-semibold text-ink" : "border border-dashed border-stamp bg-field text-stamp-ink"
+                }`}
+              >
+                공금
+              </button>
+            )}
             {members.map((m) => (
               <button
                 key={m.user_id}
                 type="button"
                 role="radio"
-                aria-checked={paidBy === m.user_id}
-                onClick={() => setPaidBy(m.user_id)}
+                aria-checked={!fromPool && paidBy === m.user_id}
+                onClick={() => {
+                  setFromPool(false);
+                  setPaidBy(m.user_id);
+                }}
                 className={`h-10 rounded-full px-4 text-sm ${
-                  paidBy === m.user_id ? "bg-ink font-medium text-white" : "border border-field-line bg-field text-ink"
+                  !fromPool && paidBy === m.user_id ? "bg-ink font-medium text-white" : "border border-field-line bg-field text-ink"
                 }`}
               >
                 {m.display_name}
@@ -81,7 +101,12 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
               </button>
             ))}
           </div>
-          {paidBy && !members.some((m) => m.user_id === paidBy) && (
+          {fromPool && (
+            <p className="text-xs text-stamp-ink">
+              공금에서 냈어요. 공금 잔액에서 빠지고, 나눌 사람끼리 몫만 정산돼요.
+            </p>
+          )}
+          {!fromPool && paidBy && !members.some((m) => m.user_id === paidBy) && (
             <p className="text-xs text-stamp-ink">지금은 나간 동행자가 낸 지출로 되어 있어요. 바꾸려면 위에서 고르세요.</p>
           )}
           {!domestic && <p className="text-xs text-muted">충전카드·현금이면 낸 사람의 지갑 평균 환율로 계산해요.</p>}
@@ -125,7 +150,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
             })}
           </div>
           <p className="text-xs text-muted">
-            {splitWith.length === 1 && splitWith[0] === paidBy
+            {!fromPool && splitWith.length === 1 && splitWith[0] === paidBy
               ? "개인 지출이에요. 정산에서 빠져요."
               : splitWith.length === members.length
                 ? "전원이 똑같이 나눠요. 나중에 들어오는 동행자도 포함돼요."

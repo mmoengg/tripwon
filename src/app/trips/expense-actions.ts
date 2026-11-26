@@ -20,6 +20,7 @@ export type ExpenseFormValues = {
   paid_by: string;
   split_with: string; // 쉼표로 구분한 user id
   split_all: string; // "1"이면 전원
+  from_pool: string; // "1"이면 공금으로 냄
 };
 
 // 에러일 때 입력값을 돌려줘서 폼 초기화 뒤에도 값이 남게 함
@@ -43,12 +44,13 @@ function readValues(formData: FormData): ExpenseFormValues {
     paid_by: g("paid_by"),
     split_with: g("split_with"),
     split_all: g("split_all"),
+    from_pool: g("from_pool"),
   };
 }
 
 // 공통 검증: 로그인 + 내 여행 + 필드. 성공하면 DB에 넣을 row 반환
 // currentPaidBy: 수정할 때 원래 낸 사람. 그대로면 멤버 검사를 건너뜀 (나간 동행자가 낸 지출도 고칠 수 있게)
-async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy: string | null = null) {
+async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy: string | null = null, wasPool = false) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return { error: "로그인이 필요해요." } as const;
@@ -73,7 +75,9 @@ async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy
   if (!DATE_RE.test(values.spent_on)) return { error: "날짜를 골라주세요." } as const;
   // 낸 사람: 비우면 DB 기본값(나). 값이 있으면 이 여행 멤버여야 함 (DB 정책도 한 번 더 확인)
   let paidBy: string | null = null;
-  if (values.paid_by && values.paid_by !== currentPaidBy) {
+  const fromPool = values.from_pool === "1";
+  if (fromPool && !wasPool && !trip.treasurer_id) return { error: "공금으로 쓰려면 멤버 화면에서 총무를 먼저 정해주세요." } as const;
+  if (!fromPool && values.paid_by && values.paid_by !== currentPaidBy) {
     const { data: m } = await supabase
       .from("trip_members")
       .select("user_id")
@@ -82,7 +86,7 @@ async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy
       .maybeSingle();
     if (!m) return { error: "낸 사람을 다시 골라주세요." } as const;
     paidBy = values.paid_by;
-  } else if (values.paid_by) {
+  } else if (!fromPool && values.paid_by) {
     paidBy = values.paid_by; // 원래 낸 사람 그대로
   }
   // 나눌 사람: 안 보내면(혼자 여행) DB가 멤버 전원으로 채움. 보냈으면 모두 멤버여야 함
@@ -120,6 +124,7 @@ async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy
       amount_krw_actual: actual,
       memo: memo || null,
       ...(paidBy ? { paid_by: paidBy } : {}),
+      from_pool: fromPool, // 공금이면 DB 트리거가 낸 사람을 비움(= 공금)
       split_all: splitAll || !splitWith,
       ...(splitWith && !splitAll ? { split_with: splitWith } : {}),
     },
@@ -153,11 +158,11 @@ export async function updateExpense(
   const supabaseForCurrent = await createClient();
   const { data: current } = await supabaseForCurrent
     .from("expenses")
-    .select("paid_by")
+    .select("paid_by, from_pool")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
-    .maybeSingle<{ paid_by: string | null }>();
-  const r = await validate(tripId, values, current?.paid_by ?? null);
+    .maybeSingle<{ paid_by: string | null; from_pool: boolean }>();
+  const r = await validate(tripId, values, current?.paid_by ?? null, current?.from_pool ?? false);
   if ("error" in r) return { error: r.error, values };
 
   // RLS가 본인 것만 허용. trip_id까지 조건으로 걸어 다른 여행 지출을 못 건드리게

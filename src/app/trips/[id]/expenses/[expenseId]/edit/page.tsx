@@ -88,9 +88,11 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
             ? members.map((m) => m.user_id).join(",")
             : (expense.split_with ?? []).filter((u) => members.some((m) => m.user_id === u)).join(","),
           split_all: expense.split_all ? "1" : "0",
+          from_pool: expense.from_pool ? "1" : "0",
         }}
         members={members}
         me={me}
+        treasurerId={trip.treasurer_id}
       />
       <ConfirmDeleteButton
         label="이 지출 삭제"

@@ -86,3 +86,16 @@ export async function joinTrip(code: string): Promise<{ error?: string }> {
   refreshTrips();
   redirect(`/trips/${tripId}`);
 }
+
+// 공금 총무 정하기 (만든 사람만, 총무는 멤버여야 함 — DB가 확인). null이면 해제
+export async function setTreasurer(tripId: string, userId: string | null): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("trips")
+    .update({ treasurer_id: userId })
+    .eq("id", tripId)
+    .select("id");
+  if (error || !data?.length) return { error: "여행을 만든 사람만 총무를 정할 수 있어요." };
+  refreshTrips();
+  return {};
+}

@@ -89,7 +89,12 @@ export function ExpenseList({ tripId, startDate, domestic, expenses, me, isOwner
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-medium">{e.title}</p>
                       <p className="text-xs text-muted">
-                        {shared && <span className="font-medium text-ink/80">{nameOf(e.paid_by)} · </span>}
+                        {shared &&
+                          (e.from_pool ? (
+                            <span className="font-semibold text-stamp-ink">공금 · </span>
+                          ) : (
+                            <span className="font-medium text-ink/80">{nameOf(e.paid_by)} · </span>
+                          ))}
                         {shared && !e.split_all && e.split_with && (
                           <span className="mr-1 rounded border border-chip px-1 text-[11px]">
                             {e.split_with.length === 1 ? "개인" : `${e.split_with.length}명`}

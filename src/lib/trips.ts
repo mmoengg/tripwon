@@ -10,6 +10,7 @@ export type Trip = {
   end_date: string | null;
   user_id: string; // 만든 사람
   invite_code: string | null;
+  treasurer_id: string | null; // 공금 총무
 };
 
 export type Member = {
@@ -35,6 +36,7 @@ export type ExpenseRow = {
   updated_by: string | null; // 마지막으로 고친 사람 (DB 트리거가 기록)
   split_with: string[] | null; // 나눌 사람 (정산)
   split_all: boolean; // true면 정산 시점 멤버 전원
+  from_pool: boolean; // 공금으로 냄 (paid_by = null)
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,7 +47,7 @@ export async function getTrip(id: string): Promise<Trip | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("trips")
-    .select("id, name, currency, rate_krw, start_date, end_date, user_id, invite_code")
+    .select("id, name, currency, rate_krw, start_date, end_date, user_id, invite_code, treasurer_id")
     .eq("id", id)
     .maybeSingle<Trip>();
   // numeric 컬럼은 문자열로 올 수 있어서 숫자로 맞춤
@@ -56,7 +58,7 @@ export async function getExpenses(tripId: string): Promise<ExpenseRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("expense_krw")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by, split_with, split_all")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by, split_with, split_all, from_pool")
     .eq("trip_id", tripId)
     .order("spent_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -140,6 +142,7 @@ export type ExpenseRecord = {
   updated_at: string | null;
   split_with: string[] | null;
   split_all: boolean;
+  from_pool: boolean;
 };
 
 export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
@@ -147,7 +150,7 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at, split_with, split_all")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at, split_with, split_all, from_pool")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
     .is("deleted_at", null) // 삭제된 지출은 수정 화면에서 안 열림 (되살리기는 상세 화면에서)
@@ -219,11 +222,12 @@ export async function getDeletedExpenses(tripId: string): Promise<DeletedExpense
 
 export type SettlementRow = {
   id: string;
-  from_user: string;
-  to_user: string;
+  from_user: string | null; // null = 공금
+  to_user: string | null; // null = 공금
   amount_krw: number;
   created_by: string;
   created_at: string;
+  kind: "settle" | "deposit"; // 송금 / 공금 입금 (나 → 공금)
 };
 
 // 송금 완료 기록 (최근 순)
@@ -231,7 +235,7 @@ export async function getSettlements(tripId: string): Promise<SettlementRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("settlements")
-    .select("id, from_user, to_user, amount_krw, created_by, created_at")
+    .select("id, from_user, to_user, amount_krw, created_by, created_at, kind")
     .eq("trip_id", tripId)
     .order("created_at", { ascending: false })
     .returns<SettlementRow[]>();

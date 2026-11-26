@@ -40,7 +40,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/trips/[id]/expo
     e.currency,
     e.amount_krw,
     RATE_SOURCE_LABEL[e.rate_source] ?? e.rate_source,
-    nameOf(e.paid_by),
+    e.from_pool ? "공금" : nameOf(e.paid_by),
     e.memo ?? "",
   ]);
   const total = expenses.reduce((s, e) => s + e.amount_krw, 0);

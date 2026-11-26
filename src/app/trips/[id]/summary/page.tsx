@@ -68,7 +68,11 @@ async function Summary({ id }: { id: string }) {
   // 여럿이 쓰는 여행: 낸 사람별 (정산 전 참고용)
   const byPayer =
     members.length > 1
-      ? groupBy(expenses, (e) => e.paid_by ?? "", members.map((m) => ({ value: m.user_id, label: m.display_name })))
+      ? groupBy(
+          expenses,
+          (e) => (e.from_pool ? "__pool__" : (e.paid_by ?? "")),
+          [{ value: "__pool__", label: "공금" }, ...members.map((m) => ({ value: m.user_id, label: m.display_name }))],
+        )
       : [];
 
   return (
