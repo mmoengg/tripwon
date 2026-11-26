@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import type { ExpenseFormState, ExpenseFormValues } from "../../../expense-actions";
 import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { AmountInput } from "@/components/amount-input";
 
 const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
 const label = "text-sm font-medium text-neutral-700";
@@ -53,11 +54,11 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
       <div className="flex flex-col gap-2">
         <label htmlFor="amount" className={label}>금액</label>
         <div className="flex gap-2">
-          <input
+          <AmountInput
             id="amount"
             name="amount"
             required
-            inputMode="decimal"
+            decimals={currency === "KRW" ? 0 : 2}
             autoFocus={!isEdit}
             defaultValue={v?.amount}
             placeholder="0"
@@ -105,10 +106,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
             명세서 실제 금액 <span className="font-normal text-neutral-400">(선택)</span>
           </label>
           <div className="flex items-center gap-2">
-            <input
+            <AmountInput
               id="amount_krw_actual"
               name="amount_krw_actual"
-              inputMode="numeric"
               defaultValue={v?.amount_krw_actual}
               placeholder="카드사 청구 원화"
               className={`${field} bg-white text-right tabular-nums`}

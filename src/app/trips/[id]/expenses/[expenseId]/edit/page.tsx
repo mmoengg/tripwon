@@ -5,8 +5,8 @@ import { Suspense } from "react";
 import { getExpense, getTrip } from "@/lib/trips";
 import { todayInSeoul } from "@/lib/format";
 import { ExpenseForm } from "../../new/expense-form";
-import { DeleteExpenseButton } from "./delete-button";
-import { updateExpense } from "../../../../expense-actions";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { deleteExpense, updateExpense } from "../../../../expense-actions";
 
 export default function EditExpensePage({ params }: PageProps<"/trips/[id]/expenses/[expenseId]/edit">) {
   return (
@@ -42,7 +42,11 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
           amount_krw_actual: expense.amount_krw_actual == null ? "" : String(Number(expense.amount_krw_actual)),
         }}
       />
-      <DeleteExpenseButton tripId={trip.id} expenseId={expense.id} />
+      <ConfirmDeleteButton
+        label="이 지출 삭제"
+        message="삭제하면 되돌릴 수 없어요. 삭제할까요?"
+        action={deleteExpense.bind(null, trip.id, expense.id)}
+      />
       </ResetOnLeave>
     </>
   );

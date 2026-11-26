@@ -31,7 +31,12 @@ async function TripDetail({ id }: { id: string }) {
   return (
     <>
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{trip.name}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold">{trip.name}</h1>
+          <Link href={`/trips/${trip.id}/edit`} className="shrink-0 pt-1 text-sm text-neutral-500 underline">
+            수정
+          </Link>
+        </div>
         <p className="text-sm text-neutral-500">
           {formatTripRange(trip.start_date, trip.end_date)} · 1 {trip.currency} = {trip.rate_krw}원
         </p>
@@ -151,7 +156,11 @@ function WalletCard({ trip, wallet, exchanges }: { trip: Trip; wallet: Wallet; e
         <summary className="cursor-pointer text-xs text-neutral-400">환전 기록 {exchanges.length}건</summary>
         <ul className="mt-2 flex flex-col gap-1">
           {exchanges.map((x) => (
-            <li key={x.id} className="flex justify-between gap-2 text-xs tabular-nums text-neutral-600">
+            <li key={x.id}>
+              <Link
+                href={`/trips/${trip.id}/exchanges/${x.id}/edit`}
+                className="-mx-2 flex justify-between gap-2 rounded-md px-2 py-1 text-xs tabular-nums text-neutral-600 hover:bg-neutral-50"
+              >
               <span>
                 {x.exchanged_on.slice(5).replace("-", "/")} · {x.kind === "prepaid" ? "충전카드" : "현금"}
               </span>
@@ -159,6 +168,7 @@ function WalletCard({ trip, wallet, exchanges }: { trip: Trip; wallet: Wallet; e
                 {formatKrw(x.krw_amount)} → {formatAmount(x.foreign_amount, trip.currency)}
                 <span className="ml-1 text-neutral-400">({formatRate(x.krw_amount / x.foreign_amount)})</span>
               </span>
+              </Link>
             </li>
           ))}
         </ul>

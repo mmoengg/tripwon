@@ -118,3 +118,25 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
     .maybeSingle<ExpenseRecord>();
   return data;
 }
+
+export async function getExchange(tripId: string, exchangeId: string): Promise<ExchangeRow | null> {
+  if (!UUID_RE.test(exchangeId)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("exchanges")
+    .select("id, kind, exchanged_on, krw_amount, foreign_amount")
+    .eq("id", exchangeId)
+    .eq("trip_id", tripId)
+    .maybeSingle<ExchangeRow>();
+  return data ? { ...data, krw_amount: Number(data.krw_amount), foreign_amount: Number(data.foreign_amount) } : null;
+}
+
+// 여행 삭제 경고 문구용
+export async function getTripCounts(tripId: string) {
+  const supabase = await createClient();
+  const [e, x] = await Promise.all([
+    supabase.from("expenses").select("id", { count: "exact", head: true }).eq("trip_id", tripId),
+    supabase.from("exchanges").select("id", { count: "exact", head: true }).eq("trip_id", tripId),
+  ]);
+  return { expenses: e.count ?? 0, exchanges: x.count ?? 0 };
+}

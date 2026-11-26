@@ -1,6 +1,7 @@
 import { ResetOnLeave } from "@/components/reset-on-leave";
 import Link from "next/link";
-import { NewTripForm } from "./new-trip-form";
+import { TripForm } from "./new-trip-form";
+import { createTrip } from "../actions";
 
 export default function NewTripPage() {
   return (
@@ -12,7 +13,7 @@ export default function NewTripPage() {
       </header>
       <h1 className="text-2xl font-semibold">새 여행</h1>
       <ResetOnLeave>
-        <NewTripForm />
+        <TripForm action={createTrip} />
       </ResetOnLeave>
     </main>
   );

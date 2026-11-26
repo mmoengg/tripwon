@@ -17,44 +17,87 @@ export type ExchangeFormState = { error?: string; values?: ExchangeFormValues };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const num = (s: string) => Number(s.replaceAll(",", "").trim());
 
+function readValues(formData: FormData): ExchangeFormValues {
+  const g = (k: string) => String(formData.get(k) ?? "");
+  return { kind: g("kind"), exchanged_on: g("exchanged_on"), krw_amount: g("krw_amount"), foreign_amount: g("foreign_amount") };
+}
+
+// 공통 검증: 로그인 + 내 여행 + 필드
+async function validate(tripId: string, values: ExchangeFormValues) {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims) return { error: "로그인이 필요해요." } as const;
+
+  const trip = await getTrip(tripId);
+  if (!trip) return { error: "여행을 찾을 수 없어요." } as const;
+
+  const krw = num(values.krw_amount);
+  const foreign = num(values.foreign_amount);
+
+  if (values.kind !== "prepaid" && values.kind !== "cash") return { error: "충전카드인지 현금인지 골라주세요." } as const;
+  if (!DATE_RE.test(values.exchanged_on)) return { error: "날짜를 골라주세요." } as const;
+  if (!Number.isFinite(krw) || krw <= 0 || krw >= 1e14) return { error: "낸 원화를 숫자로 적어주세요." } as const;
+  if (!Number.isFinite(foreign) || foreign <= 0 || foreign >= 1e12)
+    return { error: `받은 ${trip.currency} 금액을 숫자로 적어주세요.` } as const;
+
+  return {
+    supabase,
+    trip,
+    row: {
+      kind: values.kind,
+      exchanged_on: values.exchanged_on,
+      krw_amount: Math.round(krw),
+      foreign_amount: Math.round(foreign * 100) / 100,
+    },
+  } as const;
+}
+
 export async function createExchange(
   tripId: string,
   _prev: ExchangeFormState,
   formData: FormData,
 ): Promise<ExchangeFormState> {
-  const values: ExchangeFormValues = {
-    kind: String(formData.get("kind") ?? ""),
-    exchanged_on: String(formData.get("exchanged_on") ?? ""),
-    krw_amount: String(formData.get("krw_amount") ?? ""),
-    foreign_amount: String(formData.get("foreign_amount") ?? ""),
-  };
-  const fail = (error: string): ExchangeFormState => ({ error, values });
+  const values = readValues(formData);
+  const r = await validate(tripId, values);
+  if ("error" in r) return { error: r.error, values };
 
+  const { error } = await r.supabase.from("exchanges").insert({ trip_id: r.trip.id, ...r.row });
+  if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
+
+  revalidatePath(`/trips/${r.trip.id}`);
+  redirect(`/trips/${r.trip.id}`);
+}
+
+export async function updateExchange(
+  tripId: string,
+  exchangeId: string,
+  _prev: ExchangeFormState,
+  formData: FormData,
+): Promise<ExchangeFormState> {
+  const values = readValues(formData);
+  const r = await validate(tripId, values);
+  if ("error" in r) return { error: r.error, values };
+
+  const { data, error } = await r.supabase
+    .from("exchanges")
+    .update(r.row)
+    .eq("id", exchangeId)
+    .eq("trip_id", r.trip.id)
+    .select("id");
+  if (error || !data?.length) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
+
+  revalidatePath(`/trips/${r.trip.id}`);
+  redirect(`/trips/${r.trip.id}`);
+}
+
+export async function deleteExchange(tripId: string, exchangeId: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
-  if (!auth?.claims) return fail("로그인이 필요해요.");
+  if (!auth?.claims) return { error: "로그인이 필요해요." };
 
-  const trip = await getTrip(tripId);
-  if (!trip) return fail("여행을 찾을 수 없어요.");
+  const { error } = await supabase.from("exchanges").delete().eq("id", exchangeId).eq("trip_id", tripId);
+  if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
 
-  const krw = num(values.krw_amount);
-  const foreign = num(values.foreign_amount);
-
-  if (values.kind !== "prepaid" && values.kind !== "cash") return fail("충전카드인지 현금인지 골라주세요.");
-  if (!DATE_RE.test(values.exchanged_on)) return fail("날짜를 골라주세요.");
-  if (!Number.isFinite(krw) || krw <= 0 || krw >= 1e14) return fail("낸 원화를 숫자로 적어주세요.");
-  if (!Number.isFinite(foreign) || foreign <= 0 || foreign >= 1e12)
-    return fail(`받은 ${trip.currency} 금액을 숫자로 적어주세요.`);
-
-  const { error } = await supabase.from("exchanges").insert({
-    trip_id: trip.id,
-    kind: values.kind,
-    exchanged_on: values.exchanged_on,
-    krw_amount: Math.round(krw),
-    foreign_amount: Math.round(foreign * 100) / 100,
-  });
-  if (error) return fail("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
-
-  revalidatePath(`/trips/${trip.id}`);
-  redirect(`/trips/${trip.id}`);
+  revalidatePath(`/trips/${tripId}`);
+  redirect(`/trips/${tripId}`);
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { ExchangeFormState } from "../../../exchange-actions";
+import type { ExchangeFormState, ExchangeFormValues } from "../../../exchange-actions";
 import { formatRate } from "@/lib/format";
+import { AmountInput } from "@/components/amount-input";
 
 const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
 const label = "text-sm font-medium text-neutral-700";
@@ -13,11 +14,14 @@ type Props = {
   action: (prev: ExchangeFormState, formData: FormData) => Promise<ExchangeFormState>;
   currency: string;
   today: string;
+  // 있으면 수정 모드
+  initial?: ExchangeFormValues;
 };
 
-export function ExchangeForm({ action, currency, today }: Props) {
+export function ExchangeForm({ action, currency, today, initial }: Props) {
+  const isEdit = !!initial;
   const [state, formAction, pending] = useActionState<ExchangeFormState, FormData>(action, {});
-  const v = state.values;
+  const v = state.values ?? initial;
   const [kind, setKind] = useState(v?.kind ?? "prepaid");
   // 환율 미리보기용으로만 상태에 담음 (입력 칸 자체는 비제어)
   const [krw, setKrw] = useState(v?.krw_amount ?? "");
@@ -49,9 +53,9 @@ export function ExchangeForm({ action, currency, today }: Props) {
       <div className="flex flex-col gap-2">
         <label htmlFor="krw_amount" className={label}>낸 원화</label>
         <div className="flex items-center gap-2">
-          <input
-            id="krw_amount" name="krw_amount" required inputMode="numeric" autoFocus
-            defaultValue={v?.krw_amount} onInput={(e) => setKrw(e.currentTarget.value)}
+          <AmountInput
+            id="krw_amount" name="krw_amount" required autoFocus={!isEdit}
+            defaultValue={v?.krw_amount} onValueChange={setKrw}
             placeholder="100,000" className={`${field} text-right tabular-nums`}
           />
           <span className="w-10 shrink-0 text-sm text-neutral-500">원</span>
@@ -61,9 +65,9 @@ export function ExchangeForm({ action, currency, today }: Props) {
       <div className="flex flex-col gap-2">
         <label htmlFor="foreign_amount" className={label}>받은 {currency}</label>
         <div className="flex items-center gap-2">
-          <input
-            id="foreign_amount" name="foreign_amount" required inputMode="decimal"
-            defaultValue={v?.foreign_amount} onInput={(e) => setForeign(e.currentTarget.value)}
+          <AmountInput
+            id="foreign_amount" name="foreign_amount" required decimals={2}
+            defaultValue={v?.foreign_amount} onValueChange={setForeign}
             placeholder="0" className={`${field} text-right tabular-nums`}
           />
           <span className="w-10 shrink-0 text-sm text-neutral-500">{currency}</span>
@@ -85,7 +89,7 @@ export function ExchangeForm({ action, currency, today }: Props) {
       )}
 
       <button disabled={pending} className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50">
-        {pending ? "저장 중…" : "저장"}
+        {pending ? "저장 중…" : isEdit ? "수정 저장" : "저장"}
       </button>
     </form>
   );
