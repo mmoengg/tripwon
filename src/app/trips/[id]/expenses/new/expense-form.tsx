@@ -75,6 +75,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
               </button>
             ))}
           </div>
+          {paidBy && !members.some((m) => m.user_id === paidBy) && (
+            <p className="text-xs text-stamp-ink">지금은 나간 동행자가 낸 지출로 되어 있어요. 바꾸려면 위에서 고르세요.</p>
+          )}
           {!domestic && <p className="text-xs text-muted">충전카드·현금이면 낸 사람의 지갑 평균 환율로 계산해요.</p>}
         </div>
       )}

@@ -45,7 +45,8 @@ function readValues(formData: FormData): ExpenseFormValues {
 }
 
 // 공통 검증: 로그인 + 내 여행 + 필드. 성공하면 DB에 넣을 row 반환
-async function validate(tripId: string, values: ExpenseFormValues) {
+// currentPaidBy: 수정할 때 원래 낸 사람. 그대로면 멤버 검사를 건너뜀 (나간 동행자가 낸 지출도 고칠 수 있게)
+async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy: string | null = null) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return { error: "로그인이 필요해요." } as const;
@@ -70,7 +71,7 @@ async function validate(tripId: string, values: ExpenseFormValues) {
   if (!DATE_RE.test(values.spent_on)) return { error: "날짜를 골라주세요." } as const;
   // 낸 사람: 비우면 DB 기본값(나). 값이 있으면 이 여행 멤버여야 함 (DB 정책도 한 번 더 확인)
   let paidBy: string | null = null;
-  if (values.paid_by) {
+  if (values.paid_by && values.paid_by !== currentPaidBy) {
     const { data: m } = await supabase
       .from("trip_members")
       .select("user_id")
@@ -79,6 +80,8 @@ async function validate(tripId: string, values: ExpenseFormValues) {
       .maybeSingle();
     if (!m) return { error: "낸 사람을 다시 골라주세요." } as const;
     paidBy = values.paid_by;
+  } else if (values.paid_by) {
+    paidBy = values.paid_by; // 원래 낸 사람 그대로
   }
   // 나눌 사람: 안 보내면(혼자 여행) DB가 멤버 전원으로 채움. 보냈으면 모두 멤버여야 함
   let splitWith: string[] | null = null;
@@ -142,7 +145,15 @@ export async function updateExpense(
   formData: FormData,
 ): Promise<ExpenseFormState> {
   const values = readValues(formData);
-  const r = await validate(tripId, values);
+  // 원래 낸 사람 (나간 동행자일 수 있음)
+  const supabaseForCurrent = await createClient();
+  const { data: current } = await supabaseForCurrent
+    .from("expenses")
+    .select("paid_by")
+    .eq("id", expenseId)
+    .eq("trip_id", tripId)
+    .maybeSingle<{ paid_by: string | null }>();
+  const r = await validate(tripId, values, current?.paid_by ?? null);
   if ("error" in r) return { error: r.error, values };
 
   // RLS가 본인 것만 허용. trip_id까지 조건으로 걸어 다른 여행 지출을 못 건드리게
