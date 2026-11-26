@@ -5,8 +5,8 @@ import type { ExchangeFormState, ExchangeFormValues } from "../../../exchange-ac
 import { formatRate } from "@/lib/format";
 import { AmountInput } from "@/components/amount-input";
 
-// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
-const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+// bg-field(순백)·border-field-line: 바탕(paper) 위에서 입력 칸이 확실히 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-field-line bg-field px-4 text-base text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20";
 const label = "text-sm font-medium text-ink";
 const toNum = (s: string) => Number(s.replaceAll(",", "").trim());
 
@@ -33,7 +33,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
     <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="kind" value={kind} />
 
-      <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line-soft p-1" role="radiogroup">
+      <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line p-1" role="radiogroup">
         {[
           { value: "prepaid", label: "충전카드 충전" },
           { value: "cash", label: "현금 환전" },
@@ -44,7 +44,7 @@ export function ExchangeForm({ action, currency, today, initial }: Props) {
             role="radio"
             aria-checked={kind === o.value}
             onClick={() => setKind(o.value)}
-            className={`rounded-lg text-sm font-medium ${kind === o.value ? "bg-card shadow-sm" : "text-muted"}`}
+            className={`rounded-lg text-sm font-medium ${kind === o.value ? "bg-field text-ink shadow-sm" : "text-muted"}`}
           >
             {o.label}
           </button>

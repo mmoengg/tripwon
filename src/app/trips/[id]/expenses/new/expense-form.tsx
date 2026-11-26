@@ -6,8 +6,8 @@ import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { AmountInput } from "@/components/amount-input";
 
-// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
-const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+// bg-field(순백)·border-field-line: 바탕(paper) 위에서 입력 칸이 확실히 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-field-line bg-field px-4 text-base text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20";
 const label = "text-sm font-medium text-ink";
 
 type Props = {
@@ -120,7 +120,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
               name="amount_krw_actual"
               defaultValue={v?.amount_krw_actual}
               placeholder="카드사 청구 원화"
-              className={`${field} bg-card text-right tabular-nums`}
+              className={`${field} text-right tabular-nums`}
             />
             <span className="shrink-0 text-sm text-muted">원</span>
           </div>
@@ -128,11 +128,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="spent_on" className={label}>날짜</label>
-          <input id="spent_on" name="spent_on" type="date" required defaultValue={v?.spent_on ?? today} className={field} />
-        </div>
+      <div className="flex min-w-0 flex-col gap-2">
+        <label htmlFor="spent_on" className={label}>날짜</label>
+        <input id="spent_on" name="spent_on" type="date" required defaultValue={v?.spent_on ?? today} className={field} />
       </div>
 
       {state.error && (
@@ -165,7 +163,7 @@ function CategoryChips({
             defaultChecked={c.value === defaultValue}
             className="peer sr-only"
           />
-          <span className="flex h-9 items-center gap-1 rounded-full border border-line px-3 text-sm peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
+          <span className="flex h-9 items-center gap-1 rounded-full border border-field-line bg-field px-3 text-sm peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
             <span aria-hidden>{c.emoji}</span>
             {c.label}
           </span>
@@ -187,7 +185,7 @@ function Segmented({
   className?: string;
 }) {
   return (
-    <div className={`grid h-12 grid-flow-col auto-cols-fr gap-1 rounded-xl bg-line-soft p-1 ${className}`} role="radiogroup">
+    <div className={`grid h-12 grid-flow-col auto-cols-fr gap-1 rounded-xl bg-line p-1 ${className}`} role="radiogroup">
       {options.map((o) => (
         <button
           key={o.value}
@@ -196,7 +194,7 @@ function Segmented({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={`rounded-lg text-sm font-medium ${
-            value === o.value ? "bg-card text-ink shadow-sm" : "text-muted"
+            value === o.value ? "bg-field text-ink shadow-sm" : "text-muted"
           }`}
         >
           {o.label}

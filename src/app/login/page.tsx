@@ -89,7 +89,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="h-12 min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent"
+                  className="h-12 min-w-0 rounded-xl border border-field-line bg-field px-4 text-base text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20"
               />
               <button
                   disabled={status === "sending"}

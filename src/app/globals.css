@@ -15,6 +15,8 @@
   --color-accent-ink: #34502F;   /* 옅은 바탕 위 포인트 글자 */
   --color-stamp: #C9893A;        /* 우표·항공우편 줄무늬 */
   --color-stamp-ink: #8A5A1C;    /* 우표 글자 */
+  --color-field: #FFFFFF;        /* 입력 칸 바탕: 모래색 바탕 위에서 확실히 보이게 순백 */
+  --color-field-line: #CFC4B0;   /* 입력 칸 테두리 */
 
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
   --font-serif: "Nanum Myeongjo", "Noto Serif KR", serif;  /* 제목·큰 금액 */
@@ -48,6 +50,9 @@ input[type="date"] {
   appearance: none;
   display: block;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  line-height: 3rem; /* 값이 비어 있을 때 iOS가 칸 높이를 줄이지 않게 */
 }
 /* iOS는 날짜 값을 가운데 정렬함 → 다른 칸처럼 왼쪽 정렬 */
 input[type="date"]::-webkit-date-and-time-value {

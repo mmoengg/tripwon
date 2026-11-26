@@ -8,8 +8,8 @@ import { CURRENCIES } from "@/lib/currencies";
 const OVERSEAS = CURRENCIES.filter((c) => c.code !== "KRW");
 import { AmountInput, formatAmountInput } from "@/components/amount-input";
 
-// bg-card: 바탕(paper) 위에서 입력 칸이 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
-const field = "h-12 w-full min-w-0 rounded-xl border border-line bg-card px-4 text-base outline-none focus:border-accent";
+// bg-field(순백)·border-field-line: 바탕(paper) 위에서 입력 칸이 확실히 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
+const field = "h-12 w-full min-w-0 rounded-xl border border-field-line bg-field px-4 text-base text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20";
 const label = "text-sm font-medium text-ink";
 
 type Props = {
@@ -70,7 +70,7 @@ export function TripForm({ action, initial }: Props) {
       </div>
 
       {!isEdit && (
-        <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line-soft p-1" role="radiogroup" aria-label="여행 종류">
+        <div className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-line p-1" role="radiogroup" aria-label="여행 종류">
           {[
             { value: false, label: "해외 여행" },
             { value: true, label: "국내 여행" },
@@ -81,7 +81,7 @@ export function TripForm({ action, initial }: Props) {
               role="radio"
               aria-checked={domestic === o.value}
               onClick={() => pickKind(o.value)}
-              className={`rounded-lg text-sm font-medium ${domestic === o.value ? "bg-card text-ink shadow-sm" : "text-muted"}`}
+              className={`rounded-lg text-sm font-medium ${domestic === o.value ? "bg-field text-ink shadow-sm" : "text-muted"}`}
             >
               {o.label}
             </button>
@@ -116,7 +116,7 @@ export function TripForm({ action, initial }: Props) {
             lastOverseas.current = e.target.value;
             setCurrency(e.target.value);
           }}
-          className={`${field} bg-card disabled:bg-paper disabled:text-muted`}
+          className={`${field} disabled:bg-paper disabled:text-muted`}
         >
           {OVERSEAS.map((c) => (
             <option key={c.code} value={c.code}>
@@ -173,12 +173,13 @@ export function TripForm({ action, initial }: Props) {
         </>
       )}
 
+      {/* min-w-0: 그리드 셀이 iOS 날짜 칸의 고유 너비만큼 늘어나 옆 칸을 밀지 않게 */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <label htmlFor="start_date" className={label}>시작일</label>
           <input id="start_date" name="start_date" type="date" defaultValue={v?.start_date} className={field} />
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <label htmlFor="end_date" className={label}>종료일</label>
           <input id="end_date" name="end_date" type="date" defaultValue={v?.end_date} className={field} />
         </div>
