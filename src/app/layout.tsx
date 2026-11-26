@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#ffffff", // 상단 상태바·브라우저 UI 색
+  themeColor: "#F3EEE4", // 상단 상태바·브라우저 UI 색 (= 바탕 paper)
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -23,6 +23,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        {/* 제목·큰 금액용 명조체 (globals.css의 --font-serif) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap"
         />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>

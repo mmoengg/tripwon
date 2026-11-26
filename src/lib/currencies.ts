@@ -23,3 +23,10 @@ export function isCurrencyCode(v: string): v is CurrencyCode {
 export function currencyName(code: string) {
   return CURRENCIES.find((c) => c.code === code)?.name ?? code;
 }
+
+// 우표 모양 배지에 쓰는 통화 기호
+const SYMBOLS: Record<string, string> = {
+  JPY: "¥", USD: "$", EUR: "€", THB: "฿", VND: "₫", TWD: "NT$",
+  CNY: "¥", HKD: "HK$", SGD: "S$", PHP: "₱", GBP: "£", AUD: "A$", KRW: "₩",
+};
+export const currencySymbol = (code: string) => SYMBOLS[code] ?? code;

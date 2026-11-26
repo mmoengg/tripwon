@@ -32,3 +32,18 @@ export function todayInSeoul() {
 // 환율 표시: 1 미만(VND 등)은 소수 4자리, 그 외 2자리
 export const formatRate = (r: number) =>
   new Intl.NumberFormat("ko-KR", { maximumFractionDigits: r < 1 ? 4 : 2 }).format(r);
+
+// 여행 일차: 시작일 기준 "Day 3", 시작 전이면 "출발 전", 시작일이 없으면 null
+export function tripDayLabel(spentOn: string, startDate: string | null) {
+  if (!startDate) return null;
+  if (spentOn < startDate) return "출발 전";
+  const ms = new Date(`${spentOn}T00:00:00Z`).getTime() - new Date(`${startDate}T00:00:00Z`).getTime();
+  return `Day ${Math.round(ms / 86_400_000) + 1}`;
+}
+
+// "2026-12-20" → "12.20 일"
+export function formatShortDay(d: string) {
+  const date = new Date(`${d}T00:00:00Z`);
+  const wd = ["일", "월", "화", "수", "목", "금", "토"][date.getUTCDay()];
+  return `${d.slice(5, 7)}.${d.slice(8, 10)} ${wd}`;
+}

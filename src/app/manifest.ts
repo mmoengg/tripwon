@@ -3,15 +3,15 @@ import type { MetadataRoute } from "next";
 // 홈 화면에 추가했을 때의 앱 정보 (안드로이드 '앱 설치', iOS '홈 화면에 추가')
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "tripwon · 여행 경비",
+    name: "tripwon",
     short_name: "tripwon",
     description: "여행 지출을 원화로 한눈에",
     start_url: "/",
     scope: "/",
     display: "standalone", // 주소창 없이 앱처럼
     orientation: "portrait",
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    background_color: "#F3EEE4",
+    theme_color: "#F3EEE4",
     lang: "ko",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
