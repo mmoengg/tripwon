@@ -48,14 +48,29 @@ function LoginForm() {
   }
 
   return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6">
-        <header className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold">tripwon</h1>
-          <p className="text-sm text-muted">어디서 얼마 썼는지, 원화로 한눈에</p>
+      <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-6 py-10">
+        {/* 엽서 한 장: 항공우편 줄무늬 + ₩ 우표 */}
+        <header className="airmail rounded-[10px] p-1.5">
+          <div className="relative flex flex-col gap-3 rounded-md bg-card px-6 pt-8 pb-7">
+            <span
+                className="absolute top-5 right-5 flex h-[62px] w-[54px] rotate-[6deg] flex-col items-center justify-center rounded border-2 border-dashed border-stamp text-stamp-ink"
+                aria-hidden="true"
+            >
+              <span className="font-serif text-2xl font-extrabold leading-none">₩</span>
+              <span className="mt-1 text-[10px] font-semibold tracking-wider">KRW</span>
+            </span>
+            <span className="text-xs tracking-[2px] text-muted">TRAVEL · EXPENSES</span>
+            <h1 className="font-serif text-[40px] leading-none font-extrabold tracking-tight">tripwon</h1>
+            <p className="text-[15px] leading-relaxed text-muted">
+              어디서 얼마 썼는지,
+              <br />
+              원화로 한눈에.
+            </p>
+          </div>
         </header>
 
         {authError && (
-            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
               로그인에 실패했어요. 다시 시도해주세요.
             </p>
         )}
@@ -64,7 +79,7 @@ function LoginForm() {
             type="button"
             onClick={loginWithGoogle}
             disabled={googleLoading}
-            className="h-12 rounded-xl border border-line bg-card font-medium text-ink hover:bg-paper disabled:opacity-50"
+            className="h-12 rounded-xl border border-field-line bg-field font-semibold text-ink hover:bg-card disabled:opacity-50"
         >
           {googleLoading ? "구글로 이동 중…" : "Google로 계속하기"}
         </button>
@@ -76,11 +91,17 @@ function LoginForm() {
         </div>
 
         {status === "sent" ? (
-            <p className="rounded-xl bg-line-soft p-4 text-center text-sm">
-              📮 <b>{email}</b> 으로 로그인 링크를 보냈어요.
-              <br />
-              메일함을 확인해주세요.
-            </p>
+            <div className="flex flex-col items-center gap-2 rounded-[14px] bg-card p-5 text-center text-sm shadow-[0_1px_0_var(--color-line)]">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M3 7l9 6 9-6" />
+              </svg>
+              <p>
+                <b className="break-all">{email}</b> 으로
+                <br />
+                로그인 링크를 보냈어요. 메일함을 확인해주세요.
+              </p>
+            </div>
         ) : (
             <form onSubmit={loginWithEmail} className="flex flex-col gap-3">
               <input
@@ -97,7 +118,7 @@ function LoginForm() {
               >
                 {status === "sending" ? "보내는 중…" : "로그인 링크 받기"}
               </button>
-              {status === "error" && <p className="text-sm text-red-600">{message}</p>}
+              {status === "error" && <p className="text-sm text-red-700">{message}</p>}
             </form>
         )}
       </main>
