@@ -117,7 +117,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
         </div>
       )}
 
-      {members.length > 1 && !(fromPool && poolMode !== "settle") && (
+      {members.length > 1 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
             <span className={label}>누구랑 나눴나요?</span>
@@ -154,7 +154,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
             })}
           </div>
           <p className="text-xs text-muted">
-            {!fromPool && splitWith.length === 1 && splitWith[0] === paidBy
+            {fromPool && poolMode !== "settle"
+              ? "누가 썼는지 기록해 둬요. 따로 관리하는 공금이라 정산에는 안 들어가요."
+              : !fromPool && splitWith.length === 1 && splitWith[0] === paidBy
               ? "개인 지출이에요. 정산에서 빠져요."
               : splitWith.length === members.length
                 ? "전원이 똑같이 나눠요. 나중에 들어오는 동행자도 포함돼요."
