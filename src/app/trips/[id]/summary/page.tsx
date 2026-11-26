@@ -87,6 +87,15 @@ async function Summary({ id }: { id: string }) {
 
           <BarList title="카테고리별" rows={byCategory} total={total} />
           <BarList title="결제 수단별" rows={byMethod} total={total} />
+
+          {/* Link 대신 a: 파일 다운로드라 미리 불러오기(prefetch)가 필요 없음 */}
+          <a
+            href={`/trips/${trip.id}/export`}
+            download
+            className="flex h-12 items-center justify-center rounded-xl border border-neutral-200 text-sm font-medium hover:bg-neutral-50"
+          >
+            CSV로 내보내기 (엑셀에서 열기)
+          </a>
         </>
       )}
     </>

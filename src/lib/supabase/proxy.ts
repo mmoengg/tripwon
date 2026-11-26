@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// /api/keepalive: Vercel Cron 전용 (CRON_SECRET으로 따로 확인)
+const PUBLIC_PATHS = ["/login", "/auth", "/api/keepalive"];
 
 // 모든 요청마다 세션 토큰을 갱신하고, 비로그인 사용자는 /login 으로 보냄
 export async function updateSession(request: NextRequest) {
