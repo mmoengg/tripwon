@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refreshTrips } from "@/lib/refresh";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTrip } from "@/lib/trips";
@@ -64,7 +64,7 @@ export async function createExchange(
   const { error } = await r.supabase.from("exchanges").insert({ trip_id: r.trip.id, ...r.row });
   if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
 
-  revalidatePath(`/trips/${r.trip.id}`);
+  refreshTrips();
   redirect(`/trips/${r.trip.id}`);
 }
 
@@ -86,7 +86,7 @@ export async function updateExchange(
     .select("id");
   if (error || !data?.length) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
 
-  revalidatePath(`/trips/${r.trip.id}`);
+  refreshTrips();
   redirect(`/trips/${r.trip.id}`);
 }
 
@@ -99,6 +99,6 @@ export async function deleteExchange(tripId: string, exchangeId: string): Promis
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
   if (!data?.length) return { error: "내 충전·환전 기록만 삭제할 수 있어요." };
 
-  revalidatePath(`/trips/${tripId}`);
+  refreshTrips();
   redirect(`/trips/${tripId}`);
 }

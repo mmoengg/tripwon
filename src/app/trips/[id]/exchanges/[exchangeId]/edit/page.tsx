@@ -28,6 +28,7 @@ async function EditExchange({ id, exchangeId }: { id: string; exchangeId: string
       <PageTitle>충전 / 환전 수정</PageTitle>
       <ResetOnLeave>
         <ExchangeForm
+          key={[x.kind, x.exchanged_on, x.krw_amount, x.foreign_amount].join("|")}
           action={updateExchange.bind(null, trip.id, x.id)}
           currency={trip.currency}
           today={todayInSeoul()}

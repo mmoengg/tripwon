@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refreshTrips } from "@/lib/refresh";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrencyCode } from "@/lib/currencies";
@@ -71,7 +71,7 @@ export async function createTrip(_prev: TripFormState, formData: FormData): Prom
   const { error } = await supabase.from("trips").insert({ ...r.row, currency: values.currency });
   if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
 
-  revalidatePath("/");
+  refreshTrips();
   redirect("/");
 }
 
@@ -94,8 +94,7 @@ export async function updateTrip(
   const { data, error } = await supabase.from("trips").update(r.row).eq("id", trip.id).select("id");
   if (error || !data?.length) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
 
-  revalidatePath("/");
-  revalidatePath(`/trips/${trip.id}`);
+  refreshTrips();
   redirect(`/trips/${trip.id}`);
 }
 
@@ -108,7 +107,7 @@ export async function deleteTrip(tripId: string): Promise<{ error?: string }> {
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
   if (!data?.length) return { error: "여행을 만든 사람만 삭제할 수 있어요." };
 
-  revalidatePath("/");
+  refreshTrips();
   redirect("/");
 }
 

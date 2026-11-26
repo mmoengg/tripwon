@@ -67,6 +67,8 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
       })()}
       <ResetOnLeave>
       <ExpenseForm
+        // 서버에서 새 값이 오면(수정 시각·나눌 사람 등) 폼을 새로 그림
+        key={[expense.updated_at, expense.split_all, (expense.split_with ?? []).join(","), expense.paid_by].join("|")}
         action={updateExpense.bind(null, trip.id, expense.id)}
         tripCurrency={trip.currency}
         today={todayInSeoul()}

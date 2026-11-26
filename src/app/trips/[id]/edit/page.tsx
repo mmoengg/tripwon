@@ -39,6 +39,7 @@ async function EditTrip({ id }: { id: string }) {
       <PageTitle>여행 수정</PageTitle>
       <ResetOnLeave>
         <TripForm
+          key={[trip.name, trip.rate_krw, trip.start_date, trip.end_date].join("|")}
           action={updateTrip.bind(null, trip.id)}
           initial={{
             name: trip.name,

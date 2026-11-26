@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refreshTrips } from "@/lib/refresh";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isCategory } from "@/lib/categories";
@@ -138,7 +138,7 @@ export async function createExpense(
   const { error } = await r.supabase.from("expenses").insert({ trip_id: r.trip.id, ...r.row });
   if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
 
-  revalidatePath(`/trips/${r.trip.id}`);
+  refreshTrips();
   redirect(`/trips/${r.trip.id}`);
 }
 
@@ -170,7 +170,7 @@ export async function updateExpense(
   if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
   if (!data?.length) return { error: "직접 적은 지출만 수정할 수 있어요. (여행을 만든 사람은 모두 가능)", values };
 
-  revalidatePath(`/trips/${r.trip.id}`);
+  refreshTrips();
   redirect(`/trips/${r.trip.id}`);
 }
 
@@ -191,7 +191,7 @@ export async function deleteExpense(tripId: string, expenseId: string): Promise<
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
   if (!data?.length) return { error: "직접 적은 지출만 삭제할 수 있어요. (여행을 만든 사람은 모두 가능)" };
 
-  revalidatePath(`/trips/${tripId}`);
+  refreshTrips();
   redirect(`/trips/${tripId}`);
 }
 
@@ -206,6 +206,6 @@ export async function restoreExpense(tripId: string, expenseId: string): Promise
     .select("id");
   if (error) return { error: "되살리지 못했어요. 잠시 후 다시 시도해주세요." };
   if (!data?.length) return { error: "적은 사람이나 여행을 만든 사람만 되살릴 수 있어요." };
-  revalidatePath(`/trips/${tripId}`);
+  refreshTrips();
   return {};
 }
