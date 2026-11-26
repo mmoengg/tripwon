@@ -37,8 +37,8 @@ async function TripList() {
   return (
     <ul className="flex flex-col gap-3">
       {data.map((t) => (
-        // TODO(4단계): /trips/[id] 상세 페이지가 생기면 Link로 교체
-        <li key={t.id} className="rounded-2xl border border-neutral-200 p-4">
+        <li key={t.id}>
+          <Link href={`/trips/${t.id}`} className="block rounded-2xl border border-neutral-200 p-4 hover:bg-neutral-50">
           <div className="flex items-start justify-between gap-3">
             <p className="font-medium">{t.name}</p>
             <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
@@ -48,6 +48,7 @@ async function TripList() {
           <p className="mt-1 text-sm text-neutral-500">
             {formatTripRange(t.start_date, t.end_date)} · {currencyName(t.currency)}
           </p>
+          </Link>
         </li>
       ))}
     </ul>
