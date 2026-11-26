@@ -33,6 +33,7 @@ export type ExpenseRow = {
   user_id: string; // 적은 사람 (수정·삭제 권한)
   paid_by: string | null; // 낸 사람
   updated_by: string | null; // 마지막으로 고친 사람 (DB 트리거가 기록)
+  split_with: string[] | null; // 나눌 사람 (정산)
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,13 +53,14 @@ export async function getTrip(id: string): Promise<Trip | null> {
 
 export async function getExpenses(tripId: string): Promise<ExpenseRow[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("expense_krw")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by, split_with")
     .eq("trip_id", tripId)
     .order("spent_on", { ascending: false })
     .order("created_at", { ascending: false })
     .returns<ExpenseRow[]>();
+  if (error) throw new Error(`지출을 불러오지 못했어요: ${error.message}`);
   return (data ?? []).map((e) => ({ ...e, amount: Number(e.amount), amount_krw: Number(e.amount_krw) }));
 }
 
@@ -135,6 +137,7 @@ export type ExpenseRecord = {
   paid_by: string | null;
   updated_by: string | null;
   updated_at: string | null;
+  split_with: string[] | null;
 };
 
 export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
@@ -142,7 +145,7 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at, split_with")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
     .is("deleted_at", null) // 삭제된 지출은 수정 화면에서 안 열림 (되살리기는 상세 화면에서)
@@ -176,12 +179,13 @@ export async function getTripCounts(tripId: string) {
 // 여행 멤버 (만든 사람 먼저, 그다음 참여한 순서)
 export async function getMembers(tripId: string): Promise<Member[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("trip_members")
     .select("user_id, role, display_name, joined_at")
     .eq("trip_id", tripId)
     .order("joined_at", { ascending: true })
     .returns<(Member & { joined_at: string })[]>();
+  if (error) throw new Error(`멤버를 불러오지 못했어요: ${error.message}`);
   return (data ?? [])
     .map(({ user_id, role, display_name }) => ({ user_id, role, display_name }))
     .sort((a, b) => (a.role === b.role ? 0 : a.role === "owner" ? -1 : 1));
@@ -200,12 +204,35 @@ export type DeletedExpense = {
 // 논리삭제된 지출 (최근 삭제 순). 멤버 누구나 볼 수 있음
 export async function getDeletedExpenses(tripId: string): Promise<DeletedExpense[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("expenses")
     .select("id, title, amount, currency, user_id, deleted_by, deleted_at")
     .eq("trip_id", tripId)
     .not("deleted_at", "is", null)
     .order("deleted_at", { ascending: false })
     .returns<DeletedExpense[]>();
+  if (error) throw new Error(`삭제된 지출을 불러오지 못했어요: ${error.message}`);
   return (data ?? []).map((e) => ({ ...e, amount: Number(e.amount) }));
+}
+
+export type SettlementRow = {
+  id: string;
+  from_user: string;
+  to_user: string;
+  amount_krw: number;
+  created_by: string;
+  created_at: string;
+};
+
+// 송금 완료 기록 (최근 순)
+export async function getSettlements(tripId: string): Promise<SettlementRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("settlements")
+    .select("id, from_user, to_user, amount_krw, created_by, created_at")
+    .eq("trip_id", tripId)
+    .order("created_at", { ascending: false })
+    .returns<SettlementRow[]>();
+  if (error) throw new Error(`송금 기록을 불러오지 못했어요: ${error.message}`);
+  return (data ?? []).map((r) => ({ ...r, amount_krw: Number(r.amount_krw) }));
 }

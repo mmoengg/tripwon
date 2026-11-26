@@ -90,6 +90,11 @@ export function ExpenseList({ tripId, startDate, domestic, expenses, me, isOwner
                       <p className="truncate text-[15px] font-medium">{e.title}</p>
                       <p className="text-xs text-muted">
                         {shared && <span className="font-medium text-ink/80">{nameOf(e.paid_by)} · </span>}
+                        {shared && e.split_with && e.split_with.length < members.length && (
+                          <span className="mr-1 rounded border border-chip px-1 text-[11px]">
+                            {e.split_with.length === 1 ? "개인" : `${e.split_with.length}명`}
+                          </span>
+                        )}
                         {categoryInfo(e.category).label} · {paymentLabel(e.method, domestic)}
                         {e.paid_where === "korea" && " · 한국에서"}
                       </p>

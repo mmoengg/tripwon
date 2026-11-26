@@ -18,6 +18,7 @@ export type ExpenseFormValues = {
   amount_krw_actual: string;
   memo: string;
   paid_by: string;
+  split_with: string; // 쉼표로 구분한 user id
 };
 
 // 에러일 때 입력값을 돌려줘서 폼 초기화 뒤에도 값이 남게 함
@@ -39,6 +40,7 @@ function readValues(formData: FormData): ExpenseFormValues {
     amount_krw_actual: g("amount_krw_actual"),
     memo: g("memo"),
     paid_by: g("paid_by"),
+    split_with: g("split_with"),
   };
 }
 
@@ -78,6 +80,14 @@ async function validate(tripId: string, values: ExpenseFormValues) {
     if (!m) return { error: "낸 사람을 다시 골라주세요." } as const;
     paidBy = values.paid_by;
   }
+  // 나눌 사람: 안 보내면(혼자 여행) DB가 멤버 전원으로 채움. 보냈으면 모두 멤버여야 함
+  let splitWith: string[] | null = null;
+  const splitIds = [...new Set(values.split_with.split(",").map((s) => s.trim()).filter(Boolean))];
+  if (splitIds.length) {
+    const { data: ms } = await supabase.from("trip_members").select("user_id").eq("trip_id", trip.id).in("user_id", splitIds);
+    if ((ms ?? []).length !== splitIds.length) return { error: "나눌 사람을 다시 골라주세요." } as const;
+    splitWith = splitIds;
+  }
   const memo = values.memo.trim();
   if (memo.length > 500) return { error: "메모는 500자까지 적을 수 있어요." } as const;
 
@@ -104,6 +114,7 @@ async function validate(tripId: string, values: ExpenseFormValues) {
       amount_krw_actual: actual,
       memo: memo || null,
       ...(paidBy ? { paid_by: paidBy } : {}),
+      ...(splitWith ? { split_with: splitWith } : {}),
     },
   } as const;
 }

@@ -65,6 +65,7 @@ Supabase **SQL Editor**에서 아래 파일을 **순서대로 한 번씩** 실�
 4. `supabase-04_sharing.sql`: 동행자 공유 (멤버·초대 코드·권한), 사람별 지갑, 지출의 낸 사람
 5. `supabase-05_edit_trail.sql`: 지출을 마지막으로 고친 사람·시각 기록
 6. `supabase-06_soft_delete.sql`: 지출 논리삭제(되살리기), 충전 기록은 본인만 삭제
+7. `supabase-07_settlement.sql`: 정산 — 지출마다 나눌 사람, 송금 완료 기록
 
 ### 4. 로그인 설정 (Supabase 대시보드)
 - **Authentication → URL Configuration**

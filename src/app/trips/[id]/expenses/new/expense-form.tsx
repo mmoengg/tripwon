@@ -38,6 +38,13 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
     domestic ? (v?.method === "cash" ? "cash" : "credit") : (v?.method ?? "prepaid"),
   );
   const [paidBy, setPaidBy] = useState(v?.paid_by || me || "");
+  // 나눌 사람 (정산). 기본은 멤버 전원
+  const [splitWith, setSplitWith] = useState<string[]>(() => {
+    const saved = (v?.split_with ?? "").split(",").filter(Boolean);
+    return saved.length ? saved : members.map((m) => m.user_id);
+  });
+  const toggleSplit = (uid: string) =>
+    setSplitWith((cur) => (cur.includes(uid) ? (cur.length > 1 ? cur.filter((x) => x !== uid) : cur) : [...cur, uid]));
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -45,6 +52,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
       <input type="hidden" name="currency" value={currency} />
       <input type="hidden" name="method" value={method} />
       <input type="hidden" name="paid_by" value={paidBy} />
+      {members.length > 1 && <input type="hidden" name="split_with" value={splitWith.join(",")} />}
 
       {members.length > 1 && (
         <div className="flex flex-col gap-2">
@@ -67,6 +75,50 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
             ))}
           </div>
           {!domestic && <p className="text-xs text-muted">충전카드·현금이면 낸 사람의 지갑 평균 환율로 계산해요.</p>}
+        </div>
+      )}
+
+      {members.length > 1 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between">
+            <span className={label}>누구랑 나눴나요?</span>
+            <button
+              type="button"
+              onClick={() => setSplitWith(members.map((m) => m.user_id))}
+              className="text-xs text-muted underline"
+            >
+              전원
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="나눌 사람">
+            {members.map((m) => {
+              const on = splitWith.includes(m.user_id);
+              return (
+                <button
+                  key={m.user_id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleSplit(m.user_id)}
+                  className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm ${
+                    on ? "bg-accent font-medium text-white" : "border border-field-line bg-field text-muted"
+                  }`}
+                >
+                  {on && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M5 12l5 5L20 7" />
+                    </svg>
+                  )}
+                  {m.display_name}
+                  {m.user_id === me && " (나)"}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted">
+            {splitWith.length === 1 && splitWith[0] === paidBy
+              ? "개인 지출이에요. 정산에서 빠져요."
+              : `${splitWith.length}명이 똑같이 나눠요.`}
+          </p>
         </div>
       )}
 

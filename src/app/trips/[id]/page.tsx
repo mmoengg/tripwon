@@ -55,7 +55,7 @@ async function TripDetail({ id }: { id: string }) {
 
       <MembersRow tripId={trip.id} members={members} isOwner={isOwner} />
 
-      <MoneyCard trip={trip} total={total} count={expenses.length} wallet={wallet} exchanges={exchanges} />
+      <MoneyCard trip={trip} total={total} count={expenses.length} wallet={wallet} exchanges={exchanges} shared={members.length > 1} />
 
       <Link
         href={`/trips/${trip.id}/expenses/new`}
@@ -133,12 +133,14 @@ function MoneyCard({
   count,
   wallet,
   exchanges,
+  shared,
 }: {
   trip: Trip;
   total: number;
   count: number;
   wallet: Wallet;
   exchanges: ExchangeRow[];
+  shared: boolean;
 }) {
   const addHref = `/trips/${trip.id}/exchanges/new`;
   const hasExchanges = exchanges.length > 0;
@@ -153,9 +155,16 @@ function MoneyCard({
           <span className="font-serif text-[32px] font-extrabold tracking-tight tabular-nums">{formatKrw(total)}</span>
         </div>
         {count > 0 && (
-          <Link href={`/trips/${trip.id}/summary`} className="pb-1.5 text-[13px] text-muted hover:text-ink">
-            요약 →
-          </Link>
+          <span className="flex gap-3 pb-1.5 text-[13px]">
+            <Link href={`/trips/${trip.id}/summary`} className="text-muted hover:text-ink">
+              요약
+            </Link>
+            {shared && (
+              <Link href={`/trips/${trip.id}/settle`} className="font-semibold text-accent-ink">
+                정산 →
+              </Link>
+            )}
+          </span>
         )}
       </div>
 
