@@ -34,7 +34,7 @@ export function ExpenseList({ tripId, startDate, domestic, expenses, me, isOwner
 
   if (expenses.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-chip px-6 py-12 text-center">
+      <div className="rounded-[14px] border border-dashed border-chip px-6 py-12 text-center">
         <p className="font-medium">아직 지출이 없어요</p>
         <p className="mt-1 text-sm text-muted">항공권이나 숙소처럼 미리 낸 것부터 적어도 좋아요.</p>
       </div>

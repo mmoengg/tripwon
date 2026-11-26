@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExpenses, getMembers, getMyUserId, getSettlements, getTrip } from "@/lib/trips";
@@ -39,10 +39,8 @@ async function Settle({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="flex h-11 items-center text-sm text-muted hover:text-ink">
-        ← {trip.name}
-      </Link>
-      <h1 className="font-serif text-[26px] font-extrabold tracking-tight">정산</h1>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle>정산</PageTitle>
 
       {members.length < 2 ? (
         <p className="rounded-[14px] border border-dashed border-chip p-5 text-sm text-muted">

@@ -1,5 +1,5 @@
+import { BackLink, PageTitle } from "@/components/page-header";
 import { ResetOnLeave } from "@/components/reset-on-leave";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExpense, getMembers, getMyUserId, getTrip } from "@/lib/trips";
@@ -10,8 +10,8 @@ import { deleteExpense, updateExpense } from "../../../../expense-actions";
 
 export default function EditExpensePage({ params }: PageProps<"/trips/[id]/expenses/[expenseId]/edit">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-[14px] bg-card" />}>
         {params.then(({ id, expenseId }) => <EditExpense id={id} expenseId={expenseId} />)}
       </Suspense>
     </main>
@@ -32,7 +32,7 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
     const author = members.find((m) => m.user_id === expense.user_id)?.display_name ?? "다른 동행자";
     return (
       <>
-        <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
+        <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
         <p className="rounded-[14px] bg-card p-5 text-sm text-muted">
           <b className="text-ink">{author}</b>님이 적은 지출이에요. 적은 사람이나 여행을 만든 사람만 수정할 수 있어요.
         </p>
@@ -42,8 +42,8 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
-      <h1 className="text-2xl font-semibold">지출 수정</h1>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle>지출 수정</PageTitle>
       {(() => {
         const nameOf = (uid: string | null) => members.find((m) => m.user_id === uid)?.display_name ?? "나간 동행자";
         const editedByOther = expense.updated_by && expense.updated_by !== expense.user_id;

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getMyUserId, getTrip, getTripCounts } from "@/lib/trips";
@@ -9,8 +9,8 @@ import { deleteTrip, updateTrip } from "../../actions";
 
 export default function EditTripPage({ params }: PageProps<"/trips/[id]/edit">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-[14px] bg-card" />}>
         {params.then(({ id }) => <EditTrip id={id} />)}
       </Suspense>
     </main>
@@ -23,7 +23,7 @@ async function EditTrip({ id }: { id: string }) {
   if (trip.user_id !== me) {
     return (
       <>
-        <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
+        <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
         <p className="rounded-[14px] bg-card p-5 text-sm text-muted">여행 정보는 여행을 만든 사람만 수정할 수 있어요.</p>
       </>
     );
@@ -35,8 +35,8 @@ async function EditTrip({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
-      <h1 className="text-2xl font-semibold">여행 수정</h1>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle>여행 수정</PageTitle>
       <ResetOnLeave>
         <TripForm
           action={updateTrip.bind(null, trip.id)}

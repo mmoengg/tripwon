@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExchange, getTrip } from "@/lib/trips";
@@ -10,8 +10,8 @@ import { deleteExchange, updateExchange } from "../../../../exchange-actions";
 
 export default function EditExchangePage({ params }: PageProps<"/trips/[id]/exchanges/[exchangeId]/edit">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-[14px] bg-card" />}>
         {params.then(({ id, exchangeId }) => <EditExchange id={id} exchangeId={exchangeId} />)}
       </Suspense>
     </main>
@@ -24,8 +24,8 @@ async function EditExchange({ id, exchangeId }: { id: string; exchangeId: string
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
-      <h1 className="text-2xl font-semibold">충전 / 환전 수정</h1>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle>충전 / 환전 수정</PageTitle>
       <ResetOnLeave>
         <ExchangeForm
           action={updateExchange.bind(null, trip.id, x.id)}

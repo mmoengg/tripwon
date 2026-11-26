@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getExpenses, getMembers, getTrip, type ExpenseRow } from "@/lib/trips";
@@ -9,8 +9,8 @@ import { formatKrw, formatTripRange } from "@/lib/format";
 
 export default function SummaryPage({ params }: PageProps<"/trips/[id]/summary">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-[14px] bg-card" />}>
         {params.then(({ id }) => <Summary id={id} />)}
       </Suspense>
     </main>
@@ -73,14 +73,11 @@ async function Summary({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">요약</h1>
-        <p className="text-sm text-muted">{trip.name} · {formatTripRange(trip.start_date, trip.end_date)}</p>
-      </header>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle sub={`${trip.name} · ${formatTripRange(trip.start_date, trip.end_date)}`}>요약</PageTitle>
 
       {expenses.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line px-6 py-12 text-center text-sm text-muted">
+        <p className="rounded-[14px] border border-dashed border-chip px-6 py-12 text-center text-sm text-muted">
           지출을 적으면 여기에 요약이 나와요.
         </p>
       ) : (

@@ -45,7 +45,7 @@ async function TripList() {
 
   if (!data.length) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-chip px-6 py-12 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed border-chip px-6 py-12 text-center">
         <p className="font-serif text-lg font-extrabold">첫 여행을 떠나볼까요?</p>
         <p className="text-sm text-muted">여행을 만들고 쓴 돈을 원화로 기록해보세요.</p>
       </div>

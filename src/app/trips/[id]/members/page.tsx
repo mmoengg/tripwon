@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getMembers, getMyUserId, getTrip } from "@/lib/trips";
@@ -28,10 +28,8 @@ async function Members({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="flex h-11 items-center text-sm text-muted hover:text-ink">
-        ← {trip.name}
-      </Link>
-      <h1 className="font-serif text-[26px] font-extrabold tracking-tight">함께 가는 사람</h1>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle>함께 가는 사람</PageTitle>
 
       <ul className="flex flex-col divide-y divide-line-soft rounded-[14px] bg-card">
         {members.map((m, i) => (

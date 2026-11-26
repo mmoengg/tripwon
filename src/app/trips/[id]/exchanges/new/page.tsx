@@ -1,5 +1,5 @@
+import { BackLink, PageTitle } from "@/components/page-header";
 import { ResetOnLeave } from "@/components/reset-on-leave";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getTrip } from "@/lib/trips";
@@ -9,8 +9,8 @@ import { createExchange } from "../../../exchange-actions";
 
 export default function NewExchangePage({ params }: PageProps<"/trips/[id]/exchanges/new">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-line-soft" />}>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-[14px] bg-card" />}>
         {params.then(({ id }) => <NewExchange id={id} />)}
       </Suspense>
     </main>
@@ -22,11 +22,8 @@ async function NewExchange({ id }: { id: string }) {
   if (!trip) notFound();
   return (
     <>
-      <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">충전 / 환전</h1>
-        <p className="text-sm text-muted">하나머니 충전 내역이나 환전 영수증을 보고 그대로 옮겨 적으면 돼요.</p>
-      </div>
+      <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
+      <PageTitle sub="하나머니 충전 내역이나 환전 영수증을 보고 그대로 옮겨 적으면 돼요.">충전 / 환전</PageTitle>
       <ResetOnLeave>
         <ExchangeForm action={createExchange.bind(null, trip.id)} currency={trip.currency} today={todayInSeoul()} />
       </ResetOnLeave>

@@ -1,17 +1,13 @@
+import { BackLink, PageTitle } from "@/components/page-header";
 import { ResetOnLeave } from "@/components/reset-on-leave";
-import Link from "next/link";
 import { TripForm } from "./new-trip-form";
 import { createTrip } from "../actions";
 
 export default function NewTripPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
-      <header className="flex items-center gap-3">
-        <Link href="/" className="text-sm text-muted" aria-label="목록으로">
-          ← 목록
-        </Link>
-      </header>
-      <h1 className="text-2xl font-semibold">새 여행</h1>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12">
+      <BackLink href="/">내 여행</BackLink>
+      <PageTitle sub="엽서 한 장 쓰듯, 여행 이름과 통화만 정하면 돼요.">새 여행</PageTitle>
       <ResetOnLeave>
         <TripForm action={createTrip} />
       </ResetOnLeave>
