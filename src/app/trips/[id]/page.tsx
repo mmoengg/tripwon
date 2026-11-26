@@ -45,7 +45,14 @@ async function TripDetail({ id }: { id: string }) {
       <section className="rounded-2xl bg-neutral-900 p-5 text-white">
         <p className="text-sm text-neutral-400">총 지출</p>
         <p className="mt-1 text-3xl font-semibold tabular-nums">{formatKrw(total)}</p>
-        <p className="mt-1 text-xs text-neutral-400">{expenses.length}건</p>
+        <div className="mt-1 flex items-center justify-between text-xs text-neutral-400">
+          <span>{expenses.length}건</span>
+          {expenses.length > 0 && (
+            <Link href={`/trips/${trip.id}/summary`} className="text-neutral-300 underline">
+              요약 보기 →
+            </Link>
+          )}
+        </div>
       </section>
 
       <WalletCard trip={trip} wallet={wallet} exchanges={exchanges} />
