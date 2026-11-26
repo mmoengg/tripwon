@@ -153,11 +153,33 @@ export async function deleteExpense(tripId: string, expenseId: string): Promise<
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return { error: "로그인이 필요해요." };
 
-  // RLS가 막으면 에러 없이 0행 삭제로 끝나므로, 지워진 행을 돌려받아 확인
-  const { data, error } = await supabase.from("expenses").delete().eq("id", expenseId).eq("trip_id", tripId).select("id");
+  // 논리삭제: 실제로 지우지 않고 deleted_at만 기록 (시각·삭제한 사람은 DB 트리거가 채움)
+  // RLS가 막으면 에러 없이 0행으로 끝나므로, 바뀐 행을 돌려받아 확인
+  const { data, error } = await supabase
+    .from("expenses")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", expenseId)
+    .eq("trip_id", tripId)
+    .is("deleted_at", null)
+    .select("id");
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
   if (!data?.length) return { error: "직접 적은 지출만 삭제할 수 있어요. (여행을 만든 사람은 모두 가능)" };
 
   revalidatePath(`/trips/${tripId}`);
   redirect(`/trips/${tripId}`);
+}
+
+// 삭제된 지출 되살리기 (적은 사람 또는 여행을 만든 사람)
+export async function restoreExpense(tripId: string, expenseId: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expenses")
+    .update({ deleted_at: null })
+    .eq("id", expenseId)
+    .eq("trip_id", tripId)
+    .select("id");
+  if (error) return { error: "되살리지 못했어요. 잠시 후 다시 시도해주세요." };
+  if (!data?.length) return { error: "적은 사람이나 여행을 만든 사람만 되살릴 수 있어요." };
+  revalidatePath(`/trips/${tripId}`);
+  return {};
 }

@@ -63,6 +63,8 @@ Supabase **SQL Editor**에서 아래 파일을 **순서대로 한 번씩** 실�
 2. `supabase-02_wallet.sql`: 환전 기록 테이블, 결제 수단 3종, 평균 환율·잔액 뷰
 3. `supabase-03_memo.sql`: 지출 메모 칸
 4. `supabase-04_sharing.sql`: 동행자 공유 (멤버·초대 코드·권한), 사람별 지갑, 지출의 낸 사람
+5. `supabase-05_edit_trail.sql`: 지출을 마지막으로 고친 사람·시각 기록
+6. `supabase-06_soft_delete.sql`: 지출 논리삭제(되살리기), 충전 기록은 본인만 삭제
 
 ### 4. 로그인 설정 (Supabase 대시보드)
 - **Authentication → URL Configuration**

@@ -32,6 +32,7 @@ export type ExpenseRow = {
   amount_krw: number;
   user_id: string; // 적은 사람 (수정·삭제 권한)
   paid_by: string | null; // 낸 사람
+  updated_by: string | null; // 마지막으로 고친 사람 (DB 트리거가 기록)
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,7 +54,7 @@ export async function getExpenses(tripId: string): Promise<ExpenseRow[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("expense_krw")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by")
     .eq("trip_id", tripId)
     .order("spent_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -132,6 +133,8 @@ export type ExpenseRecord = {
   memo: string | null;
   user_id: string;
   paid_by: string | null;
+  updated_by: string | null;
+  updated_at: string | null;
 };
 
 export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
@@ -139,9 +142,10 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
+    .is("deleted_at", null) // 삭제된 지출은 수정 화면에서 안 열림 (되살리기는 상세 화면에서)
     .maybeSingle<ExpenseRecord>();
   return data;
 }
@@ -163,7 +167,7 @@ export async function getExchange(tripId: string, exchangeId: string): Promise<E
 export async function getTripCounts(tripId: string) {
   const supabase = await createClient();
   const [e, x] = await Promise.all([
-    supabase.from("expenses").select("id", { count: "exact", head: true }).eq("trip_id", tripId),
+    supabase.from("expenses").select("id", { count: "exact", head: true }).eq("trip_id", tripId).is("deleted_at", null),
     supabase.from("exchanges").select("id", { count: "exact", head: true }).eq("trip_id", tripId),
   ]);
   return { expenses: e.count ?? 0, exchanges: x.count ?? 0 };
@@ -181,4 +185,27 @@ export async function getMembers(tripId: string): Promise<Member[]> {
   return (data ?? [])
     .map(({ user_id, role, display_name }) => ({ user_id, role, display_name }))
     .sort((a, b) => (a.role === b.role ? 0 : a.role === "owner" ? -1 : 1));
+}
+
+export type DeletedExpense = {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  user_id: string;
+  deleted_by: string | null;
+  deleted_at: string;
+};
+
+// 논리삭제된 지출 (최근 삭제 순). 멤버 누구나 볼 수 있음
+export async function getDeletedExpenses(tripId: string): Promise<DeletedExpense[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("expenses")
+    .select("id, title, amount, currency, user_id, deleted_by, deleted_at")
+    .eq("trip_id", tripId)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false })
+    .returns<DeletedExpense[]>();
+  return (data ?? []).map((e) => ({ ...e, amount: Number(e.amount) }));
 }

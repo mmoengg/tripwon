@@ -94,6 +94,16 @@ export function ExpenseList({ tripId, startDate, domestic, expenses, me, isOwner
                         {e.paid_where === "korea" && " · 한국에서"}
                       </p>
                       {e.memo && <p className="mt-0.5 truncate text-xs text-muted/80">{e.memo}</p>}
+                      {/* 적은 사람이 아닌 사람(여행을 만든 사람)이 고쳤으면 표시 */}
+                      {e.updated_by && e.updated_by !== e.user_id && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-stamp-ink">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                          {nameOf(e.updated_by)}님이 수정함
+                        </p>
+                      )}
                     </div>
                     <div className="text-right tabular-nums">
                       <p className="text-[15px] font-semibold">

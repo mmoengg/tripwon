@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getExchanges, getExpenses, getMembers, getMyUserId, getTrip, getWallet, type ExchangeRow, type Member, type Trip, type Wallet } from "@/lib/trips";
+import { getDeletedExpenses, getExchanges, getExpenses, getMembers, getMyUserId, getTrip, getWallet, type DeletedExpense, type ExchangeRow, type Member, type Trip, type Wallet } from "@/lib/trips";
+import { restoreExpense } from "../expense-actions";
+import { RestoreButton } from "./restore-button";
 import { MemberAvatar } from "@/components/member-avatar";
 import { currencyName, currencySymbol, isDomestic } from "@/lib/currencies";
 import { formatAmount, formatKrw, formatRate, formatTripRange } from "@/lib/format";
@@ -21,12 +23,13 @@ export default function TripPage({ params }: PageProps<"/trips/[id]">) {
 async function TripDetail({ id }: { id: string }) {
   const trip = await getTrip(id);
   if (!trip) notFound();
-  const [expenses, wallet, exchanges, members, me] = await Promise.all([
+  const [expenses, wallet, exchanges, members, me, deleted] = await Promise.all([
     getExpenses(id),
     getWallet(id),
     getExchanges(id),
     getMembers(id),
     getMyUserId(),
+    getDeletedExpenses(id),
   ]);
   const isOwner = trip.user_id === me;
   const total = expenses.reduce((s, e) => s + e.amount_krw, 0);
@@ -64,6 +67,10 @@ async function TripDetail({ id }: { id: string }) {
       <div className="mt-1">
         <ExpenseList tripId={trip.id} startDate={trip.start_date} domestic={isDomestic(trip.currency)} expenses={expenses} me={me} isOwner={isOwner} members={members} />
       </div>
+
+      {deleted.length > 0 && (
+        <DeletedList tripId={trip.id} items={deleted} members={members} me={me} isOwner={isOwner} />
+      )}
     </>
   );
 }
@@ -225,6 +232,44 @@ function MoneyCard({
       </>
       )}
     </section>
+  );
+}
+
+// 논리삭제된 지출: 누가 언제 지웠는지 + 되살리기 (적은 사람·만든 사람)
+function DeletedList({
+  tripId,
+  items,
+  members,
+  me,
+  isOwner,
+}: {
+  tripId: string;
+  items: DeletedExpense[];
+  members: Member[];
+  me: string | null;
+  isOwner: boolean;
+}) {
+  const nameOf = (uid: string | null) => members.find((m) => m.user_id === uid)?.display_name ?? "나간 동행자";
+  const when = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return (
+    <details className="rounded-[14px] border border-dashed border-chip px-4 py-3 text-sm">
+      <summary className="flex min-h-9 cursor-pointer items-center text-muted">삭제된 지출 {items.length}건</summary>
+      <ul className="mt-2 flex flex-col divide-y divide-line-soft">
+        {items.map((e) => (
+          <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-muted line-through">
+                {e.title} · {formatAmount(e.amount, e.currency)}
+              </p>
+              <p className="text-xs text-muted">
+                {nameOf(e.deleted_by)}님이 삭제 · {when.format(new Date(e.deleted_at))}
+              </p>
+            </div>
+            {(isOwner || e.user_id === me) && <RestoreButton action={restoreExpense.bind(null, tripId, e.id)} />}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

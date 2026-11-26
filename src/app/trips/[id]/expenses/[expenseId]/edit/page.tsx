@@ -44,6 +44,27 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
     <>
       <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
       <h1 className="text-2xl font-semibold">지출 수정</h1>
+      {(() => {
+        const nameOf = (uid: string | null) => members.find((m) => m.user_id === uid)?.display_name ?? "나간 동행자";
+        const editedByOther = expense.updated_by && expense.updated_by !== expense.user_id;
+        const authorIsOther = expense.user_id !== me;
+        if (!editedByOther && !authorIsOther) return null;
+        return (
+          <div className="-mt-2 flex flex-col gap-1 rounded-xl border border-dashed border-stamp/60 bg-card px-4 py-3 text-sm text-stamp-ink">
+            {authorIsOther && (
+              <p>
+                <b>{nameOf(expense.user_id)}</b>님이 적은 지출이에요. 여기서 고치면 <b>&lsquo;{nameOf(me)}님이 수정함&rsquo;</b> 표시가 남아요.
+              </p>
+            )}
+            {editedByOther && expense.updated_at && (
+              <p className="text-xs">
+                마지막 수정: {nameOf(expense.updated_by)} ·{" "}
+                {new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(expense.updated_at))}
+              </p>
+            )}
+          </div>
+        );
+      })()}
       <ResetOnLeave>
       <ExpenseForm
         action={updateExpense.bind(null, trip.id, expense.id)}
@@ -66,7 +87,7 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
       />
       <ConfirmDeleteButton
         label="이 지출 삭제"
-        message="삭제하면 되돌릴 수 없어요. 삭제할까요?"
+        message="삭제한 지출은 여행 화면 맨 아래 '삭제된 지출'에서 다시 살릴 수 있어요. 삭제할까요?"
         action={deleteExpense.bind(null, trip.id, expense.id)}
       />
       </ResetOnLeave>
