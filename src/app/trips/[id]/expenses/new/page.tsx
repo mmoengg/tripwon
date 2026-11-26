@@ -25,7 +25,7 @@ async function NewExpense({ id }: { id: string }) {
       <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
       <PageTitle>지출 추가</PageTitle>
       <ResetOnLeave>
-        <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} members={members} me={me} treasurerId={trip.treasurer_id} />
+        <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} members={members} me={me} poolMode={trip.pool_mode} />
       </ResetOnLeave>
     </>
   );

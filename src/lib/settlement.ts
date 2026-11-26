@@ -38,21 +38,35 @@ export type Transfer = { from: string; to: string; amount: number };
 //  · 나간 사람과 주고받은 송금 기록은 빠짐
 //  · 공금은 '가상 멤버': 공금 결제는 공금이 낸 돈, 입금은 나 → 공금 송금.
 //    남은 공금은 공금이 '줄 돈'이 돼서 송금 목록에 '공금 → 누구'로 나옴
-export function computeSettlement(expenses: SettleExpense[], records: SettleRecord[], memberIds: string[]) {
+//  · poolMode가 'settle'이 아니면(따로 관리·안 씀) 공금 지출과 공금 기록은 정산에서 빠짐 (poolExcluded로 셈)
+export type PoolMode = "off" | "separate" | "settle";
+
+export function computeSettlement(
+  expenses: SettleExpense[],
+  records: SettleRecord[],
+  memberIds: string[],
+  poolMode: PoolMode = "settle",
+) {
   const paid = new Map<string, number>();
   const owed = new Map<string, number>();
   const add = (m: Map<string, number>, k: string, v: number) => m.set(k, (m.get(k) ?? 0) + v);
   const members = new Set(memberIds);
-  const poolUsed = expenses.some((e) => e.from_pool) || records.some((r) => !r.from_user || !r.to_user);
+  const settlePool = poolMode === "settle";
+  const poolUsed = settlePool && (expenses.some((e) => e.from_pool) || records.some((r) => !r.from_user || !r.to_user));
   const nodes = new Set(memberIds); // 정산 참여자 (사람 + 공금)
   if (poolUsed) nodes.add(POOL);
   const nodeOf = (u: string | null) => u ?? POOL;
   let skipped = 0;
+  let poolExcluded = 0;
   let excludedByLeft = 0;
 
   for (const e of expenses) {
     const amount = Math.round(e.amount_krw);
     if (amount <= 0) continue;
+    if (e.from_pool && !settlePool) {
+      poolExcluded++; // 따로 관리하는 공금은 정산 밖
+      continue;
+    }
     const payer = e.from_pool ? POOL : e.paid_by;
     if (!payer) {
       skipped++;
@@ -121,5 +135,5 @@ export function computeSettlement(expenses: SettleExpense[], records: SettleReco
   }
 
   const people = balances.filter((p) => p.userId !== POOL);
-  return { people, transfers, skipped, excludedByLeft, pool: poolUsed ? pool : null };
+  return { people, transfers, skipped, excludedByLeft, poolExcluded, pool: poolUsed ? pool : null };
 }

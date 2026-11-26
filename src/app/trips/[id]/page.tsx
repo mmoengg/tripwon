@@ -154,14 +154,16 @@ function MoneyCard({
           <span className="text-xs text-muted">총 지출 · {count}건</span>
           <span className="font-serif text-[32px] font-extrabold tracking-tight tabular-nums">{formatKrw(total)}</span>
         </div>
-        {count > 0 && (
+        {(count > 0 || trip.pool_mode !== "off") && (
           <span className="flex gap-3 pb-1.5 text-[13px]">
-            <Link href={`/trips/${trip.id}/summary`} className="text-muted hover:text-ink">
-              요약
-            </Link>
-            {shared && (
+            {count > 0 && (
+              <Link href={`/trips/${trip.id}/summary`} className="text-muted hover:text-ink">
+                요약
+              </Link>
+            )}
+            {(shared || trip.pool_mode !== "off") && (
               <Link href={`/trips/${trip.id}/settle`} className="font-semibold text-accent-ink">
-                정산 →
+                {shared ? "정산 →" : "공금 →"}
               </Link>
             )}
           </span>

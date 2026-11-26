@@ -1,12 +1,14 @@
 import { BackLink, PageTitle } from "@/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getExpenses, getMembers, getMyUserId, getSettlements, getTrip } from "@/lib/trips";
+import { getExpenses, getMembers, getMyUserId, getPoolFunds, getSettlements, getTrip } from "@/lib/trips";
 import { computeSettlement, POOL } from "@/lib/settlement";
-import { formatKrw } from "@/lib/format";
+import { formatAmount, formatKrw } from "@/lib/format";
 import { MemberAvatar } from "@/components/member-avatar";
 import { markDeposit, markSettled, undoSettlement } from "../../settle-actions";
 import { DepositForm } from "./deposit-form";
+import { PoolFundForm } from "./pool-fund-form";
+import { addPoolFund, deletePoolFund } from "../../pool-actions";
 import { SettleButton } from "./settle-button";
 
 export default function SettlePage({ params }: PageProps<"/trips/[id]/settle">) {
@@ -22,14 +24,21 @@ export default function SettlePage({ params }: PageProps<"/trips/[id]/settle">) 
 async function Settle({ id }: { id: string }) {
   const trip = await getTrip(id);
   if (!trip) notFound();
-  const [expenses, members, records, me] = await Promise.all([
+  const separate = trip.pool_mode === "separate";
+  const [expenses, members, records, me, funds] = await Promise.all([
     getExpenses(id),
     getMembers(id),
     getSettlements(id),
     getMyUserId(),
+    separate ? getPoolFunds(id) : Promise.resolve([]),
   ]);
   const isOwner = trip.user_id === me;
-  const { people, transfers, skipped, excludedByLeft, pool } = computeSettlement(expenses, records, members.map((m) => m.user_id));
+  const { people, transfers, skipped, excludedByLeft, poolExcluded, pool } = computeSettlement(
+    expenses,
+    records,
+    members.map((m) => m.user_id),
+    trip.pool_mode,
+  );
 
   const idx = new Map(members.map((m, i) => [m.user_id, i]));
   const nameOf = (uid: string | null) =>
@@ -60,6 +69,23 @@ async function Settle({ id }: { id: string }) {
   const depositors = canRecordAnyDeposit ? members : members.filter((m) => m.user_id === me);
   const memberSet = new Set(members.map((m) => m.user_id));
   const depositOf = new Map<string, number>();
+  // 따로 관리 공금: 통화별 넣은 돈 / 쓴 돈
+  const poolExpenses = expenses.filter((e) => e.from_pool);
+  const poolCurrencies = [...new Set([...funds.map((f) => f.currency), ...poolExpenses.map((e) => e.currency)])].sort(
+    (a, b) => (a === "KRW" ? 1 : 0) - (b === "KRW" ? 1 : 0),
+  );
+  const sumBy = <T,>(xs: T[], cur: string, pick: (x: T) => [string, number]) =>
+    xs.reduce((acc, x) => {
+      const [c, n] = pick(x);
+      return c === cur ? acc + n : acc;
+    }, 0);
+  const poolRows = poolCurrencies.map((c) => {
+    const put = sumBy(funds, c, (f) => [f.currency, f.amount]);
+    const used = sumBy(poolExpenses, c, (e) => [e.currency, e.amount]);
+    return { currency: c, put, used, left: Math.round((put - used) * 100) / 100 };
+  });
+  const poolSpentKrw = poolExpenses.reduce((acc, e) => acc + e.amount_krw, 0);
+  const canEditFunds = isOwner || me === treasurer;
   for (const r of deposits)
     if (r.from_user && memberSet.has(r.from_user)) depositOf.set(r.from_user, (depositOf.get(r.from_user) ?? 0) + r.amount_krw);
 
@@ -68,6 +94,68 @@ async function Settle({ id }: { id: string }) {
       <BackLink href={`/trips/${trip.id}`}>{trip.name}</BackLink>
       <PageTitle>정산</PageTitle>
 
+      {/* 따로 관리 공금 (곗돈 등): 정산과 상관없이 늘 보임 */}
+      {separate && (
+        <section className="flex flex-col gap-3 rounded-[14px] border border-dashed border-stamp bg-card p-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold text-stamp-ink">공금 · 따로 관리</h2>
+            <span className="text-xs text-muted">{treasurer ? `총무 ${nameOf(treasurer)}가 보관` : "정산에 안 들어가요"}</span>
+          </div>
+          {poolRows.length === 0 ? (
+            <p className="text-sm text-muted">아직 넣은 공금이 없어요. 곗돈처럼 모아둔 돈을 넣어 두면 남은 돈을 보여드려요.</p>
+          ) : (
+            <table className="w-full text-sm tabular-nums">
+              <thead>
+                <tr className="text-xs text-muted">
+                  <th className="pb-1 text-left font-normal" scope="col">
+                    <span className="sr-only">통화</span>
+                  </th>
+                  <th className="pb-1 text-right font-normal" scope="col">넣은 돈</th>
+                  <th className="pb-1 text-right font-normal" scope="col">쓴 돈</th>
+                  <th className="pb-1 text-right font-normal" scope="col">남은 돈</th>
+                </tr>
+              </thead>
+              <tbody>
+                {poolRows.map((r) => (
+                  <tr key={r.currency}>
+                    <th scope="row" className="py-1 text-left text-xs font-normal text-muted">
+                      {r.currency === "KRW" ? "원화" : r.currency}
+                    </th>
+                    <td className="py-1 text-right">{formatAmount(r.put, r.currency)}</td>
+                    <td className="py-1 text-right">{formatAmount(r.used, r.currency)}</td>
+                    <td className={`py-1 text-right font-semibold ${r.left < 0 ? "text-red-700" : ""}`}>
+                      {formatAmount(r.left, r.currency)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {poolExpenses.length > 0 && poolCurrencies.some((c) => c !== "KRW") && (
+            <p className="-mt-1 text-xs text-muted">공금으로 쓴 돈은 원화로 {formatKrw(poolSpentKrw)}이에요.</p>
+          )}
+          {canEditFunds && (
+            <PoolFundForm tripCurrency={trip.currency} action={addPoolFund.bind(null, trip.id)} />
+          )}
+          {funds.length > 0 && (
+            <ul className="flex flex-col divide-y divide-line-soft border-t border-line-soft">
+              {funds.map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="min-w-0 truncate">
+                    {f.memo || "공금"} · <b className="tabular-nums">{formatAmount(f.amount, f.currency)}</b>
+                    {f.krw_amount !== null && <span className="text-xs text-muted"> ({formatKrw(f.krw_amount)})</span>}
+                    <span className="ml-1 text-xs text-muted">{when.format(new Date(f.created_at))}</span>
+                  </span>
+                  {(isOwner || f.created_by === me) && (
+                    <SettleButton variant="ghost" label="지우기" action={deletePoolFund.bind(null, trip.id, f.id)} />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       {members.length < 2 ? (
         <p className="rounded-[14px] border border-dashed border-chip p-5 text-sm text-muted">
           동행자를 초대하면 누가 누구에게 얼마를 보내면 되는지 계산해 드려요.
@@ -75,7 +163,7 @@ async function Settle({ id }: { id: string }) {
       ) : (
         <>
           {/* 공금 */}
-          {(treasurer || pool) && (
+          {trip.pool_mode === "settle" && (
             <section className="flex flex-col gap-3 rounded-[14px] border border-dashed border-stamp bg-card p-4">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-sm font-semibold text-stamp-ink">공금</h2>
@@ -100,7 +188,7 @@ async function Settle({ id }: { id: string }) {
               {pool && pool.outflow > 0 && (
                 <p className="-mt-1 text-xs text-muted">공금에서 돌려준 {formatKrw(pool.outflow)}이 빠진 금액이에요.</p>
               )}
-              {treasurer && depositors.length > 0 && (
+              {depositors.length > 0 && (
                 <DepositForm members={depositors} defaultFrom={depositors[0].user_id} action={markDeposit.bind(null, trip.id)} />
               )}
               {deposits.length > 0 && (
@@ -167,6 +255,7 @@ async function Settle({ id }: { id: string }) {
               송금 횟수가 가장 적게 계산했어요. 일부만 보냈다면 보낸 금액만큼 완료로 표시돼요.
               {estimated > 0 && ` 신용카드 예상 금액 ${estimated}건이 포함돼 있어서, 명세서 금액을 넣으면 정산액이 조금 바뀔 수 있어요.`}
               {skipped > 0 && ` 낸 사람이 없는 지출 ${skipped}건은 빠졌어요.`}
+              {poolExcluded > 0 && ` 따로 관리하는 공금 지출 ${poolExcluded}건은 정산에 안 들어가요.`}
               {excludedByLeft > 0 && ` 나간 동행자가 낸 지출 ${excludedByLeft}건은 빠졌어요(나간 사람 몫은 남은 사람끼리 다시 나눠요).`}
             </p>
           </section>

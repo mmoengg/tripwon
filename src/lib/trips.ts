@@ -10,7 +10,8 @@ export type Trip = {
   end_date: string | null;
   user_id: string; // 만든 사람
   invite_code: string | null;
-  treasurer_id: string | null; // 공금 총무
+  treasurer_id: string | null; // 공금 총무 (공금 현금을 들고 있는 사람)
+  pool_mode: "off" | "separate" | "settle"; // 공금: 안 씀 / 따로 관리(정산 제외) / 회비로 정산
 };
 
 export type Member = {
@@ -47,7 +48,7 @@ export async function getTrip(id: string): Promise<Trip | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("trips")
-    .select("id, name, currency, rate_krw, start_date, end_date, user_id, invite_code, treasurer_id")
+    .select("id, name, currency, rate_krw, start_date, end_date, user_id, invite_code, treasurer_id, pool_mode")
     .eq("id", id)
     .maybeSingle<Trip>();
   // numeric 컬럼은 문자열로 올 수 있어서 숫자로 맞춤
@@ -241,4 +242,31 @@ export async function getSettlements(tripId: string): Promise<SettlementRow[]> {
     .returns<SettlementRow[]>();
   if (error) throw new Error(`송금 기록을 불러오지 못했어요: ${error.message}`);
   return (data ?? []).map((r) => ({ ...r, amount_krw: Number(r.amount_krw) }));
+}
+
+export type PoolFund = {
+  id: string;
+  currency: string; // KRW 또는 여행 통화
+  amount: number;
+  krw_amount: number | null; // 외화를 만드는 데 든 원화 (선택)
+  memo: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+// '따로 관리' 공금에 넣은 돈 (오래된 순)
+export async function getPoolFunds(tripId: string): Promise<PoolFund[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("pool_funds")
+    .select("id, currency, amount, krw_amount, memo, created_by, created_at")
+    .eq("trip_id", tripId)
+    .order("created_at", { ascending: true })
+    .returns<PoolFund[]>();
+  if (error) throw new Error(`공금 기록을 불러오지 못했어요: ${error.message}`);
+  return (data ?? []).map((f) => ({
+    ...f,
+    amount: Number(f.amount),
+    krw_amount: f.krw_amount == null ? null : Number(f.krw_amount),
+  }));
 }

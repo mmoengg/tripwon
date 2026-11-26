@@ -21,10 +21,10 @@ type Props = {
   // 낸 사람 후보 (멤버). 2명 이상일 때만 고르는 칸이 보임
   members?: { user_id: string; display_name: string }[];
   me?: string | null;
-  treasurerId?: string | null; // 공금 총무 (있으면 '공금' 선택지가 생김)
+  poolMode?: "off" | "separate" | "settle"; // 공금 방식 (off가 아니면 '공금' 선택지가 생김)
 };
 
-export function ExpenseForm({ action, tripCurrency, today, initial, members = [], me = null, treasurerId = null }: Props) {
+export function ExpenseForm({ action, tripCurrency, today, initial, members = [], me = null, poolMode = "off" }: Props) {
   const isEdit = !!initial;
   const [state, formAction, pending] = useActionState<ExpenseFormState, FormData>(action, {});
   // 에러로 돌아온 값 > 수정할 원래 값 > 빈 값
@@ -42,6 +42,8 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
   const [paidBy, setPaidBy] = useState(v?.paid_by || me || "");
   // 공금으로 냄: 낸 쪽은 공금 지갑 (DB가 paid_by를 비움)
   const [fromPool, setFromPool] = useState(v?.from_pool === "1");
+  // 공금을 쓰는 여행이거나, 원래 공금 지출이면 '공금' 버튼을 보여줌
+  const poolOn = poolMode !== "off" || v?.from_pool === "1";
   // 나눌 사람 (정산). 기본은 멤버 전원
   const [splitWith, setSplitWith] = useState<string[]>(() => {
     const saved = (v?.split_with ?? "").split(",").filter(Boolean);
@@ -65,11 +67,11 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
         </>
       )}
 
-      {members.length > 1 && (
+      {(members.length > 1 || poolOn) && (
         <div className="flex flex-col gap-2">
           <span className={label}>누가 냈나요?</span>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="낸 사람">
-            {(treasurerId || v?.from_pool === "1") && (
+            {poolOn && (
               <button
                 type="button"
                 role="radio"
@@ -103,7 +105,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
           </div>
           {fromPool && (
             <p className="text-xs text-stamp-ink">
-              공금에서 냈어요. 공금 잔액에서 빠지고, 나눌 사람끼리 몫만 정산돼요.
+              {poolMode === "settle"
+                ? "공금에서 냈어요. 공금 잔액에서 빠지고, 나눌 사람끼리 몫만 정산돼요."
+                : "공금에서 냈어요. 공금 잔액에서만 빠지고, 정산에는 안 들어가요."}
             </p>
           )}
           {!fromPool && paidBy && !members.some((m) => m.user_id === paidBy) && (
@@ -113,7 +117,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
         </div>
       )}
 
-      {members.length > 1 && (
+      {members.length > 1 && !(fromPool && poolMode !== "settle") && (
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
             <span className={label}>누구랑 나눴나요?</span>

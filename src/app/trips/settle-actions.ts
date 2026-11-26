@@ -43,8 +43,8 @@ export async function undoSettlement(tripId: string, settlementId: string): Prom
 export async function markDeposit(tripId: string, fromUser: string, amount: number): Promise<{ error?: string }> {
   if (!Number.isFinite(amount) || amount <= 0 || amount >= 1e14) return { error: "금액을 숫자로 적어주세요." };
   const supabase = await createClient();
-  const { data: trip } = await supabase.from("trips").select("treasurer_id").eq("id", tripId).maybeSingle();
-  if (!trip?.treasurer_id) return { error: "멤버 화면에서 총무를 먼저 정해주세요." };
+  const { data: trip } = await supabase.from("trips").select("pool_mode").eq("id", tripId).maybeSingle();
+  if (trip?.pool_mode !== "settle") return { error: "공금 방식이 '회비로 정산'일 때만 입금을 기록해요." };
   const { error } = await supabase
     .from("settlements")
     .insert({ trip_id: tripId, from_user: fromUser, to_user: null, amount_krw: Math.round(amount), kind: "deposit" });

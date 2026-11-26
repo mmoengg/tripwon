@@ -71,6 +71,7 @@ Supabase **SQL Editor**에서 아래 파일을 **순서대로 한 번씩** 실�
 9. `supabase-09_split_all.sql`: '전원' 나누기 — 나중에 들어온 동행자도 정산에 포함
 10. `supabase-10_pool.sql`: 공금 — 총무, 공금 결제, 공금 입금
 11. `supabase-11_pool_wallet.sql`: 공금을 가상 지갑으로 — 공금 결제는 공금이 낸 돈, 입금·돌려주기는 공금과의 송금
+12. `supabase-12_pool_mode.sql`: 공금 방식 고르기 — 안 씀 / 따로 관리(곗돈, 정산 제외, 외화 가능) / 회비로 정산
 
 ### 4. 로그인 설정 (Supabase 대시보드)
 - **Authentication → URL Configuration**

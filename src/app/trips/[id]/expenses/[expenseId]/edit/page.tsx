@@ -92,7 +92,7 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
         }}
         members={members}
         me={me}
-        treasurerId={trip.treasurer_id}
+        poolMode={trip.pool_mode}
       />
       <ConfirmDeleteButton
         label="이 지출 삭제"

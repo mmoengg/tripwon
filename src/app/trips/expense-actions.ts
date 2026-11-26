@@ -76,7 +76,7 @@ async function validate(tripId: string, values: ExpenseFormValues, currentPaidBy
   // 낸 사람: 비우면 DB 기본값(나). 값이 있으면 이 여행 멤버여야 함 (DB 정책도 한 번 더 확인)
   let paidBy: string | null = null;
   const fromPool = values.from_pool === "1";
-  if (fromPool && !wasPool && !trip.treasurer_id) return { error: "공금으로 쓰려면 멤버 화면에서 총무를 먼저 정해주세요." } as const;
+  if (fromPool && !wasPool && trip.pool_mode === "off") return { error: "공금으로 쓰려면 멤버 화면에서 공금 방식을 먼저 골라주세요." } as const;
   if (!fromPool && values.paid_by && values.paid_by !== currentPaidBy) {
     const { data: m } = await supabase
       .from("trip_members")

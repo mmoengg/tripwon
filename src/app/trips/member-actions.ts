@@ -99,3 +99,13 @@ export async function setTreasurer(tripId: string, userId: string | null): Promi
   refreshTrips();
   return {};
 }
+
+// 공금 방식 (만든 사람만 — DB 정책이 확인)
+export async function setPoolMode(tripId: string, mode: string): Promise<{ error?: string }> {
+  if (mode !== "off" && mode !== "separate" && mode !== "settle") return { error: "공금 방식을 골라주세요." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("trips").update({ pool_mode: mode }).eq("id", tripId).select("id");
+  if (error || !data?.length) return { error: "여행을 만든 사람만 공금 방식을 바꿀 수 있어요." };
+  refreshTrips();
+  return {};
+}

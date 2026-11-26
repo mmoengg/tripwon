@@ -5,8 +5,8 @@ import { getMembers, getMyUserId, getTrip } from "@/lib/trips";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ResetOnLeave } from "@/components/reset-on-leave";
-import { createInvite, disableInvite, leaveTrip, removeMember, renameMe, setTreasurer } from "../../member-actions";
-import { TreasurerPicker } from "./treasurer-picker";
+import { createInvite, disableInvite, leaveTrip, removeMember, renameMe, setTreasurer, setPoolMode } from "../../member-actions";
+import { PoolSettings } from "./treasurer-picker";
 import { InviteBox } from "./invite-box";
 import { RemoveMemberButton } from "./remove-member-button";
 import { RenameForm } from "./rename-form";
@@ -66,8 +66,14 @@ async function Members({ id }: { id: string }) {
         </p>
       )}
 
-      {isOwner && members.length > 1 && (
-        <TreasurerPicker members={members} current={trip.treasurer_id} action={setTreasurer.bind(null, trip.id)} />
+      {isOwner && (
+        <PoolSettings
+          members={members}
+          mode={trip.pool_mode}
+          treasurer={trip.treasurer_id}
+          setMode={setPoolMode.bind(null, trip.id)}
+          setTreasurer={setTreasurer.bind(null, trip.id)}
+        />
       )}
 
       <ResetOnLeave>
