@@ -82,6 +82,7 @@ export function ExpenseList({ tripId, startDate, expenses }: Props) {
                         {categoryInfo(e.category).label} · {paymentLabel(e.method)}
                         {e.paid_where === "korea" && " · 한국에서"}
                       </p>
+                      {e.memo && <p className="mt-0.5 truncate text-xs text-muted/80">{e.memo}</p>}
                     </div>
                     <div className="text-right tabular-nums">
                       <p className="text-[15px] font-semibold">

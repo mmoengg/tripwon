@@ -16,6 +16,7 @@ export type ExpenseFormValues = {
   method: string;
   spent_on: string;
   amount_krw_actual: string;
+  memo: string;
 };
 
 // 에러일 때 입력값을 돌려줘서 폼 초기화 뒤에도 값이 남게 함
@@ -35,6 +36,7 @@ function readValues(formData: FormData): ExpenseFormValues {
     method: g("method"),
     spent_on: g("spent_on"),
     amount_krw_actual: g("amount_krw_actual"),
+    memo: g("memo"),
   };
 }
 
@@ -62,6 +64,8 @@ async function validate(tripId: string, values: ExpenseFormValues) {
     return { error: "결제 장소를 골라주세요." } as const;
   if (!isPaymentMethod(values.method)) return { error: "결제 수단을 골라주세요." } as const;
   if (!DATE_RE.test(values.spent_on)) return { error: "날짜를 골라주세요." } as const;
+  const memo = values.memo.trim();
+  if (memo.length > 500) return { error: "메모는 500자까지 적을 수 있어요." } as const;
 
   // 명세서 실제 금액: 신용카드 + 현지 통화일 때만 의미 있음. 그 외엔 비움
   let actual: number | null = null;
@@ -84,6 +88,7 @@ async function validate(tripId: string, values: ExpenseFormValues) {
       method: values.method,
       spent_on: values.spent_on,
       amount_krw_actual: actual,
+      memo: memo || null,
     },
   } as const;
 }

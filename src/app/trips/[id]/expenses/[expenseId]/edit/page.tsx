@@ -40,6 +40,7 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
           method: expense.method,
           spent_on: expense.spent_on,
           amount_krw_actual: expense.amount_krw_actual == null ? "" : String(Number(expense.amount_krw_actual)),
+          memo: expense.memo ?? "",
         }}
       />
       <ConfirmDeleteButton

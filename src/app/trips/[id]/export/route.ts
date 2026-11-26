@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/trips/[id]/expo
   // 화면은 최신순이지만 파일은 날짜 순서대로
   const expenses = (await getExpenses(id)).reverse();
 
-  const header = ["날짜", "내용", "카테고리", "결제 장소", "결제 수단", "금액", "통화", "원화 금액", "환산 기준"];
+  const header = ["날짜", "내용", "카테고리", "결제 장소", "결제 수단", "금액", "통화", "원화 금액", "환산 기준", "메모"];
   const rows = expenses.map((e) => [
     e.spent_on,
     e.title,
@@ -38,9 +38,10 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/trips/[id]/expo
     e.currency,
     e.amount_krw,
     RATE_SOURCE_LABEL[e.rate_source] ?? e.rate_source,
+    e.memo ?? "",
   ]);
   const total = expenses.reduce((s, e) => s + e.amount_krw, 0);
-  rows.push(["", "합계", "", "", "", "", "", total, ""]);
+  rows.push(["", "합계", "", "", "", "", "", total, "", ""]);
 
   // ﻿(BOM): 엑셀이 UTF-8로 인식해서 한글이 안 깨짐. 줄바꿈은 엑셀 기본인 CRLF
   const csv = "﻿" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");

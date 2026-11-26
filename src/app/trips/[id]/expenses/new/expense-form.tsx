@@ -133,6 +133,21 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
         <input id="spent_on" name="spent_on" type="date" required defaultValue={v?.spent_on ?? today} className={field} />
       </div>
 
+      <div className="flex flex-col gap-2">
+        <label htmlFor="memo" className={label}>
+          메모 <span className="font-normal text-muted">(선택)</span>
+        </label>
+        <textarea
+          id="memo"
+          name="memo"
+          rows={3}
+          maxLength={500}
+          defaultValue={v?.memo}
+          placeholder="같이 간 사람, 맛 평가, 영수증 위치 등"
+          className={`${field} h-auto resize-none py-3 leading-relaxed`}
+        />
+      </div>
+
       {state.error && (
         <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600" aria-live="polite">{state.error}</p>
       )}

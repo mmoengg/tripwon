@@ -19,6 +19,7 @@ export type ExpenseRow = {
   paid_where: "local" | "korea";
   method: PaymentMethod;
   rate_source: "krw" | "actual" | "exchange" | "trip";
+  memo: string | null;
   spent_on: string;
   amount_krw: number;
 };
@@ -42,7 +43,7 @@ export async function getExpenses(tripId: string): Promise<ExpenseRow[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("expense_krw")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo")
     .eq("trip_id", tripId)
     .order("spent_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -105,6 +106,7 @@ export type ExpenseRecord = {
   method: string;
   spent_on: string;
   amount_krw_actual: number | null;
+  memo: string | null;
 };
 
 export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
@@ -112,7 +114,7 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
     .maybeSingle<ExpenseRecord>();
