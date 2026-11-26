@@ -2,7 +2,7 @@ import { ResetOnLeave } from "@/components/reset-on-leave";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getTrip } from "@/lib/trips";
+import { getMembers, getMyUserId, getTrip } from "@/lib/trips";
 import { todayInSeoul } from "@/lib/format";
 import { ExpenseForm } from "./expense-form";
 import { createExpense } from "../../../expense-actions";
@@ -18,14 +18,14 @@ export default function NewExpensePage({ params }: PageProps<"/trips/[id]/expens
 }
 
 async function NewExpense({ id }: { id: string }) {
-  const trip = await getTrip(id);
+  const [trip, members, me] = await Promise.all([getTrip(id), getMembers(id), getMyUserId()]);
   if (!trip) notFound();
   return (
     <>
       <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
       <h1 className="text-2xl font-semibold">지출 추가</h1>
       <ResetOnLeave>
-        <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} />
+        <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} members={members} me={me} />
       </ResetOnLeave>
     </>
   );

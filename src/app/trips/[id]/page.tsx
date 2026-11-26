@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getExchanges, getExpenses, getTrip, getWallet, type ExchangeRow, type Trip, type Wallet } from "@/lib/trips";
+import { getExchanges, getExpenses, getMembers, getMyUserId, getTrip, getWallet, type ExchangeRow, type Member, type Trip, type Wallet } from "@/lib/trips";
+import { MemberAvatar } from "@/components/member-avatar";
 import { currencyName, currencySymbol, isDomestic } from "@/lib/currencies";
 import { formatAmount, formatKrw, formatRate, formatTripRange } from "@/lib/format";
 import { ExpenseList } from "./expense-list";
@@ -20,7 +21,14 @@ export default function TripPage({ params }: PageProps<"/trips/[id]">) {
 async function TripDetail({ id }: { id: string }) {
   const trip = await getTrip(id);
   if (!trip) notFound();
-  const [expenses, wallet, exchanges] = await Promise.all([getExpenses(id), getWallet(id), getExchanges(id)]);
+  const [expenses, wallet, exchanges, members, me] = await Promise.all([
+    getExpenses(id),
+    getWallet(id),
+    getExchanges(id),
+    getMembers(id),
+    getMyUserId(),
+  ]);
+  const isOwner = trip.user_id === me;
   const total = expenses.reduce((s, e) => s + e.amount_krw, 0);
 
   return (
@@ -32,12 +40,17 @@ async function TripDetail({ id }: { id: string }) {
           </svg>
           내 여행
         </Link>
-        <Link href={`/trips/${trip.id}/edit`} className="flex h-11 items-center underline hover:text-ink">
-          수정
-        </Link>
+        {/* 여행 정보 수정은 만든 사람만 */}
+        {isOwner && (
+          <Link href={`/trips/${trip.id}/edit`} className="flex h-11 items-center underline hover:text-ink">
+            수정
+          </Link>
+        )}
       </nav>
 
       <Postcard trip={trip} />
+
+      <MembersRow tripId={trip.id} members={members} isOwner={isOwner} />
 
       <MoneyCard trip={trip} total={total} count={expenses.length} wallet={wallet} exchanges={exchanges} />
 
@@ -49,7 +62,7 @@ async function TripDetail({ id }: { id: string }) {
       </Link>
 
       <div className="mt-1">
-        <ExpenseList tripId={trip.id} startDate={trip.start_date} expenses={expenses} />
+        <ExpenseList tripId={trip.id} startDate={trip.start_date} domestic={isDomestic(trip.currency)} expenses={expenses} me={me} isOwner={isOwner} members={members} />
       </div>
     </>
   );
@@ -79,6 +92,30 @@ function Postcard({ trip }: { trip: Trip }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// 멤버 동그라미 + 초대·멤버 화면으로
+function MembersRow({ tripId, members, isOwner }: { tripId: string; members: Member[]; isOwner: boolean }) {
+  const solo = members.length <= 1;
+  const shown = members.slice(0, 5);
+  return (
+    <Link
+      href={`/trips/${tripId}/members`}
+      className="flex min-h-11 items-center justify-between gap-3 rounded-xl px-1 text-sm hover:bg-card/60"
+    >
+      <span className="flex items-center gap-2.5">
+        <span className="flex -space-x-2">
+          {shown.map((m, i) => (
+            <MemberAvatar key={m.user_id} name={m.display_name} index={i} size={28} />
+          ))}
+        </span>
+        <span className="text-muted">
+          {solo ? "혼자 기록 중" : `${members.map((m) => m.display_name).slice(0, 2).join(", ")}${members.length > 2 ? ` 외 ${members.length - 2}명` : ""}`}
+        </span>
+      </span>
+      <span className="shrink-0 font-medium text-accent-ink">{isOwner ? (solo ? "+ 동행자 초대" : "멤버 · 초대 →") : "멤버 →"}</span>
+    </Link>
   );
 }
 

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getExpenses, getTrip, type ExpenseRow } from "@/lib/trips";
+import { getExpenses, getMembers, getTrip, type ExpenseRow } from "@/lib/trips";
 import { CATEGORIES } from "@/lib/categories";
-import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { DOMESTIC_METHODS, PAYMENT_METHODS } from "@/lib/payment-methods";
 import { formatKrw, formatTripRange } from "@/lib/format";
 
 export default function SummaryPage({ params }: PageProps<"/trips/[id]/summary">) {
@@ -41,7 +41,7 @@ function tripDays(start: string | null, end: string | null) {
 async function Summary({ id }: { id: string }) {
   const trip = await getTrip(id);
   if (!trip) notFound();
-  const expenses = await getExpenses(id);
+  const [expenses, members] = await Promise.all([getExpenses(id), getMembers(id)]);
 
   const total = expenses.reduce((s, e) => s + e.amount_krw, 0);
   const local = expenses.filter((e) => e.paid_where === "local");
@@ -53,7 +53,16 @@ async function Summary({ id }: { id: string }) {
   const estimated = expenses.filter((e) => e.rate_source === "trip");
 
   const byCategory = groupBy(expenses, (e) => e.category, CATEGORIES);
-  const byMethod = groupBy(expenses, (e) => e.method, [...PAYMENT_METHODS]);
+  // 국내 여행은 카드/현금 두 가지로 묶음 (충전카드도 카드로)
+  const domestic = trip.currency === "KRW";
+  const byMethod = domestic
+    ? groupBy(expenses, (e) => (e.method === "cash" ? "cash" : "credit"), [...DOMESTIC_METHODS])
+    : groupBy(expenses, (e) => e.method, [...PAYMENT_METHODS]);
+  // 여럿이 쓰는 여행: 낸 사람별 (정산 전 참고용)
+  const byPayer =
+    members.length > 1
+      ? groupBy(expenses, (e) => e.paid_by ?? "", members.map((m) => ({ value: m.user_id, label: m.display_name })))
+      : [];
 
   return (
     <>
@@ -95,6 +104,7 @@ async function Summary({ id }: { id: string }) {
 
           <BarList title="카테고리별" rows={byCategory} total={total} />
           <BarList title="결제 수단별" rows={byMethod} total={total} />
+          {byPayer.length > 0 && <BarList title="낸 사람별" rows={byPayer} total={total} />}
 
           {/* Link 대신 a: 파일 다운로드라 미리 불러오기(prefetch)가 필요 없음 */}
           <a

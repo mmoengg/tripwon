@@ -104,8 +104,9 @@ export async function deleteTrip(tripId: string): Promise<{ error?: string }> {
   const supabase = await requireUser();
   if (!supabase) return { error: "로그인이 필요해요." };
 
-  const { error } = await supabase.from("trips").delete().eq("id", tripId);
+  const { data, error } = await supabase.from("trips").delete().eq("id", tripId).select("id");
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
+  if (!data?.length) return { error: "여행을 만든 사람만 삭제할 수 있어요." };
 
   revalidatePath("/");
   redirect("/");

@@ -2,16 +2,26 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { ExpenseRow } from "@/lib/trips";
+import type { ExpenseRow, Member } from "@/lib/trips";
 import { CATEGORIES, categoryInfo } from "@/lib/categories";
 import { paymentLabel } from "@/lib/payment-methods";
 import { formatAmount, formatKrw, formatShortDay, tripDayLabel } from "@/lib/format";
 import { CategoryIcon } from "@/components/category-icon";
 
-type Props = { tripId: string; startDate: string | null; expenses: ExpenseRow[] };
+type Props = {
+  tripId: string;
+  startDate: string | null;
+  domestic: boolean;
+  expenses: ExpenseRow[];
+  me: string | null;
+  isOwner: boolean;
+  members: Member[];
+};
 
 // 카테고리 탭 + 날짜별 묶음 리스트. 탭을 바꾸면 날짜별 합계도 그 카테고리 기준
-export function ExpenseList({ tripId, startDate, expenses }: Props) {
+export function ExpenseList({ tripId, startDate, domestic, expenses, me, isOwner, members }: Props) {
+  const shared = members.length > 1;
+  const nameOf = (uid: string | null) => members.find((m) => m.user_id === uid)?.display_name ?? "나간 동행자";
   const [tab, setTab] = useState<string>("all");
 
   // 실제로 쓴 카테고리만 탭으로 (정해진 순서대로)
@@ -69,17 +79,18 @@ export function ExpenseList({ tripId, startDate, expenses }: Props) {
               </span>
             </div>
             <ul className="flex flex-col divide-y divide-line-soft rounded-[14px] bg-card">
-              {items.map((e) => (
-                <li key={e.id}>
-                  <Link
-                    href={`/trips/${tripId}/expenses/${e.id}/edit`}
-                    className="flex items-center gap-3 px-3.5 py-3 first:rounded-t-[14px] last:rounded-b-[14px] hover:bg-paper/50"
-                  >
+              {items.map((e) => {
+                // 수정·삭제: 적은 사람 또는 여행을 만든 사람만 (DB 권한과 같은 규칙)
+                const canEdit = isOwner || e.user_id === me;
+                const rowClass = "flex items-center gap-3 px-3.5 py-3 first:rounded-t-[14px] last:rounded-b-[14px]";
+                const body = (
+                  <>
                     <CategoryIcon category={e.category} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-medium">{e.title}</p>
                       <p className="text-xs text-muted">
-                        {categoryInfo(e.category).label} · {paymentLabel(e.method)}
+                        {shared && <span className="font-medium text-ink/80">{nameOf(e.paid_by)} · </span>}
+                        {categoryInfo(e.category).label} · {paymentLabel(e.method, domestic)}
                         {e.paid_where === "korea" && " · 한국에서"}
                       </p>
                       {e.memo && <p className="mt-0.5 truncate text-xs text-muted/80">{e.memo}</p>}
@@ -95,9 +106,20 @@ export function ExpenseList({ tripId, startDate, expenses }: Props) {
                       </p>
                       {e.currency !== "KRW" && <p className="text-xs text-muted">{formatAmount(e.amount, e.currency)}</p>}
                     </div>
-                  </Link>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={e.id}>
+                    {canEdit ? (
+                      <Link href={`/trips/${tripId}/expenses/${e.id}/edit`} className={`${rowClass} hover:bg-paper/50`}>
+                        {body}
+                      </Link>
+                    ) : (
+                      <div className={rowClass}>{body}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         );

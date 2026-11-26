@@ -13,8 +13,8 @@ export function formatAmountInput(raw: string, decimals: number) {
     const dot = s.indexOf(".");
     if (dot >= 0) s = s.slice(0, dot + 1) + s.slice(dot + 1).replaceAll(".", "").slice(0, decimals);
   }
-  let [int, dec] = s.split(".");
-  int = int.replace(/^0+(?=\d)/, "").slice(0, MAX_INT_DIGITS); // 앞자리 0 제거
+  const [rawInt, dec] = s.split(".");
+  let int = rawInt.replace(/^0+(?=\d)/, "").slice(0, MAX_INT_DIGITS); // 앞자리 0 제거
   if (int === "" && dec !== undefined) int = "0"; // ".5" → "0.5"
   const withCommas = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return dec !== undefined ? `${withCommas}.${dec}` : withCommas;

@@ -27,6 +27,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* 제목·큰 금액용 명조체 (globals.css의 --font-serif) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* App Router의 루트 layout이라 모든 페이지에 적용됨 (이 규칙은 pages/_document 기준이라 해당 없음) */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap"

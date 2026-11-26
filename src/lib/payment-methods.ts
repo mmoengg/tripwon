@@ -11,6 +11,14 @@ export function isPaymentMethod(v: string): v is PaymentMethod {
   return PAYMENT_METHODS.some((m) => m.value === v);
 }
 
-export function paymentLabel(v: string) {
+// 국내 여행(KRW)은 환율이 없어서 카드 종류를 나눌 필요가 없음 → 카드 / 현금 두 가지
+// DB에는 카드를 credit으로 저장 (예전에 충전카드로 적은 것도 '카드'로 보여줌)
+export const DOMESTIC_METHODS = [
+  { value: "credit", label: "카드" },
+  { value: "cash", label: "현금" },
+] as const;
+
+export function paymentLabel(v: string, domestic = false) {
+  if (domestic) return v === "cash" ? "현금" : "카드";
   return PAYMENT_METHODS.find((m) => m.value === v)?.label ?? v;
 }

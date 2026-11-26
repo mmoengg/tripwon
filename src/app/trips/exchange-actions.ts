@@ -95,8 +95,9 @@ export async function deleteExchange(tripId: string, exchangeId: string): Promis
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return { error: "로그인이 필요해요." };
 
-  const { error } = await supabase.from("exchanges").delete().eq("id", exchangeId).eq("trip_id", tripId);
+  const { data, error } = await supabase.from("exchanges").delete().eq("id", exchangeId).eq("trip_id", tripId).select("id");
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
+  if (!data?.length) return { error: "내 충전·환전 기록만 삭제할 수 있어요." };
 
   revalidatePath(`/trips/${tripId}`);
   redirect(`/trips/${tripId}`);

@@ -62,6 +62,7 @@ Supabase **SQL Editor**에서 아래 파일을 **순서대로 한 번씩** 실�
 1. `supabase-01_schema.sql`: 여행·지출 테이블, RLS, 원화 환산 뷰
 2. `supabase-02_wallet.sql`: 환전 기록 테이블, 결제 수단 3종, 평균 환율·잔액 뷰
 3. `supabase-03_memo.sql`: 지출 메모 칸
+4. `supabase-04_sharing.sql`: 동행자 공유 (멤버·초대 코드·권한), 사람별 지갑, 지출의 낸 사람
 
 ### 4. 로그인 설정 (Supabase 대시보드)
 - **Authentication → URL Configuration**

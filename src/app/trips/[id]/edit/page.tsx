@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getTrip, getTripCounts } from "@/lib/trips";
+import { getMyUserId, getTrip, getTripCounts } from "@/lib/trips";
 import { ResetOnLeave } from "@/components/reset-on-leave";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { TripForm } from "../../new/new-trip-form";
@@ -18,8 +18,16 @@ export default function EditTripPage({ params }: PageProps<"/trips/[id]/edit">) 
 }
 
 async function EditTrip({ id }: { id: string }) {
-  const [trip, counts] = await Promise.all([getTrip(id), getTripCounts(id)]);
+  const [trip, counts, me] = await Promise.all([getTrip(id), getTripCounts(id), getMyUserId()]);
   if (!trip) notFound();
+  if (trip.user_id !== me) {
+    return (
+      <>
+        <Link href={`/trips/${trip.id}`} className="text-sm text-muted">← {trip.name}</Link>
+        <p className="rounded-[14px] bg-card p-5 text-sm text-muted">여행 정보는 여행을 만든 사람만 수정할 수 있어요.</p>
+      </>
+    );
+  }
 
   const lost = [counts.expenses && `지출 ${counts.expenses}건`, counts.exchanges && `환전 기록 ${counts.exchanges}건`]
     .filter(Boolean)

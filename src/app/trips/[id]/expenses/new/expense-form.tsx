@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import type { ExpenseFormState, ExpenseFormValues } from "../../../expense-actions";
 import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
-import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { DOMESTIC_METHODS, PAYMENT_METHODS } from "@/lib/payment-methods";
 import { AmountInput } from "@/components/amount-input";
 
 // bg-field(순백)·border-field-line: 바탕(paper) 위에서 입력 칸이 확실히 보이게 / min-w-0: iOS에서 날짜·숫자 칸이 최소 너비 때문에 겹치는 것 방지 / text-base(16px): iOS 자동 확대 방지
@@ -17,9 +17,12 @@ type Props = {
   today: string;
   // 있으면 수정 모드: 원래 값을 채우고 버튼 문구가 바뀜
   initial?: ExpenseFormValues;
+  // 낸 사람 후보 (멤버). 2명 이상일 때만 고르는 칸이 보임
+  members?: { user_id: string; display_name: string }[];
+  me?: string | null;
 };
 
-export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
+export function ExpenseForm({ action, tripCurrency, today, initial, members = [], me = null }: Props) {
   const isEdit = !!initial;
   const [state, formAction, pending] = useActionState<ExpenseFormState, FormData>(action, {});
   // 에러로 돌아온 값 > 수정할 원래 값 > 빈 값
@@ -28,15 +31,44 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
   // 결제 장소/통화/수단은 서로 연동되는 토글이라 상태로 관리하고 hidden input으로 전송
   const [paidWhere, setPaidWhere] = useState(v?.paid_where ?? "local");
   const [currency, setCurrency] = useState(v?.currency ?? tripCurrency);
-  const [method, setMethod] = useState(v?.method ?? "prepaid");
   // 국내 여행(KRW): 결제 장소·통화 선택이 필요 없고, 환전 설명도 숨김
   const domestic = tripCurrency === "KRW";
+  // 국내는 카드(credit)/현금 두 가지. 예전에 충전카드로 적은 국내 지출은 '카드'로 보여줌
+  const [method, setMethod] = useState(
+    domestic ? (v?.method === "cash" ? "cash" : "credit") : (v?.method ?? "prepaid"),
+  );
+  const [paidBy, setPaidBy] = useState(v?.paid_by || me || "");
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="paid_where" value={paidWhere} />
       <input type="hidden" name="currency" value={currency} />
       <input type="hidden" name="method" value={method} />
+      <input type="hidden" name="paid_by" value={paidBy} />
+
+      {members.length > 1 && (
+        <div className="flex flex-col gap-2">
+          <span className={label}>누가 냈나요?</span>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="낸 사람">
+            {members.map((m) => (
+              <button
+                key={m.user_id}
+                type="button"
+                role="radio"
+                aria-checked={paidBy === m.user_id}
+                onClick={() => setPaidBy(m.user_id)}
+                className={`h-10 rounded-full px-4 text-sm ${
+                  paidBy === m.user_id ? "bg-ink font-medium text-white" : "border border-field-line bg-field text-ink"
+                }`}
+              >
+                {m.display_name}
+                {m.user_id === me && " (나)"}
+              </button>
+            ))}
+          </div>
+          {!domestic && <p className="text-xs text-muted">충전카드·현금이면 낸 사람의 지갑 평균 환율로 계산해요.</p>}
+        </div>
+      )}
 
       {!domestic && (
       <div className="flex flex-col gap-2">
@@ -101,7 +133,7 @@ export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
         <span className={label}>결제 수단</span>
         <Segmented
           value={method}
-          options={PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label }))}
+          options={(domestic ? DOMESTIC_METHODS : PAYMENT_METHODS).map((m) => ({ value: m.value, label: m.label }))}
           onChange={setMethod}
         />
         {!domestic && (

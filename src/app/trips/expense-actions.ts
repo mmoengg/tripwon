@@ -17,6 +17,7 @@ export type ExpenseFormValues = {
   spent_on: string;
   amount_krw_actual: string;
   memo: string;
+  paid_by: string;
 };
 
 // 에러일 때 입력값을 돌려줘서 폼 초기화 뒤에도 값이 남게 함
@@ -37,6 +38,7 @@ function readValues(formData: FormData): ExpenseFormValues {
     spent_on: g("spent_on"),
     amount_krw_actual: g("amount_krw_actual"),
     memo: g("memo"),
+    paid_by: g("paid_by"),
   };
 }
 
@@ -64,6 +66,18 @@ async function validate(tripId: string, values: ExpenseFormValues) {
     return { error: "결제 장소를 골라주세요." } as const;
   if (!isPaymentMethod(values.method)) return { error: "결제 수단을 골라주세요." } as const;
   if (!DATE_RE.test(values.spent_on)) return { error: "날짜를 골라주세요." } as const;
+  // 낸 사람: 비우면 DB 기본값(나). 값이 있으면 이 여행 멤버여야 함 (DB 정책도 한 번 더 확인)
+  let paidBy: string | null = null;
+  if (values.paid_by) {
+    const { data: m } = await supabase
+      .from("trip_members")
+      .select("user_id")
+      .eq("trip_id", trip.id)
+      .eq("user_id", values.paid_by)
+      .maybeSingle();
+    if (!m) return { error: "낸 사람을 다시 골라주세요." } as const;
+    paidBy = values.paid_by;
+  }
   const memo = values.memo.trim();
   if (memo.length > 500) return { error: "메모는 500자까지 적을 수 있어요." } as const;
 
@@ -89,6 +103,7 @@ async function validate(tripId: string, values: ExpenseFormValues) {
       spent_on: values.spent_on,
       amount_krw_actual: actual,
       memo: memo || null,
+      ...(paidBy ? { paid_by: paidBy } : {}),
     },
   } as const;
 }
@@ -126,7 +141,8 @@ export async function updateExpense(
     .eq("id", expenseId)
     .eq("trip_id", r.trip.id)
     .select("id");
-  if (error || !data?.length) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
+  if (error) return { error: "저장하지 못했어요. 잠시 후 다시 시도해주세요.", values };
+  if (!data?.length) return { error: "직접 적은 지출만 수정할 수 있어요. (여행을 만든 사람은 모두 가능)", values };
 
   revalidatePath(`/trips/${r.trip.id}`);
   redirect(`/trips/${r.trip.id}`);
@@ -137,8 +153,10 @@ export async function deleteExpense(tripId: string, expenseId: string): Promise<
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return { error: "로그인이 필요해요." };
 
-  const { error } = await supabase.from("expenses").delete().eq("id", expenseId).eq("trip_id", tripId);
+  // RLS가 막으면 에러 없이 0행 삭제로 끝나므로, 지워진 행을 돌려받아 확인
+  const { data, error } = await supabase.from("expenses").delete().eq("id", expenseId).eq("trip_id", tripId).select("id");
   if (error) return { error: "삭제하지 못했어요. 잠시 후 다시 시도해주세요." };
+  if (!data?.length) return { error: "직접 적은 지출만 삭제할 수 있어요. (여행을 만든 사람은 모두 가능)" };
 
   revalidatePath(`/trips/${tripId}`);
   redirect(`/trips/${tripId}`);
