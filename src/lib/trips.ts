@@ -34,6 +34,7 @@ export type ExpenseRow = {
   paid_by: string | null; // 낸 사람
   updated_by: string | null; // 마지막으로 고친 사람 (DB 트리거가 기록)
   split_with: string[] | null; // 나눌 사람 (정산)
+  split_all: boolean; // true면 정산 시점 멤버 전원
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -55,7 +56,7 @@ export async function getExpenses(tripId: string): Promise<ExpenseRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("expense_krw")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by, split_with")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw, rate_source, memo, user_id, paid_by, updated_by, split_with, split_all")
     .eq("trip_id", tripId)
     .order("spent_on", { ascending: false })
     .order("created_at", { ascending: false })
@@ -138,6 +139,7 @@ export type ExpenseRecord = {
   updated_by: string | null;
   updated_at: string | null;
   split_with: string[] | null;
+  split_all: boolean;
 };
 
 export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
@@ -145,7 +147,7 @@ export async function getExpense(tripId: string, expenseId: string): Promise<Exp
   const supabase = await createClient();
   const { data } = await supabase
     .from("expenses")
-    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at, split_with")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual, memo, user_id, paid_by, updated_by, updated_at, split_with, split_all")
     .eq("id", expenseId)
     .eq("trip_id", tripId)
     .is("deleted_at", null) // 삭제된 지출은 수정 화면에서 안 열림 (되살리기는 상세 화면에서)

@@ -82,7 +82,10 @@ async function EditExpense({ id, expenseId }: { id: string; expenseId: string })
           memo: expense.memo ?? "",
           paid_by: expense.paid_by ?? "",
           // 나간 동행자는 고를 수 없으니 지금 멤버만 남김
-          split_with: (expense.split_with ?? []).filter((u) => members.some((m) => m.user_id === u)).join(","),
+          split_with: expense.split_all
+            ? members.map((m) => m.user_id).join(",")
+            : (expense.split_with ?? []).filter((u) => members.some((m) => m.user_id === u)).join(","),
+          split_all: expense.split_all ? "1" : "0",
         }}
         members={members}
         me={me}

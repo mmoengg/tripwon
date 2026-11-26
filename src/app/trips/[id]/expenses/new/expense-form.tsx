@@ -53,7 +53,13 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
       <input type="hidden" name="currency" value={currency} />
       <input type="hidden" name="method" value={method} />
       <input type="hidden" name="paid_by" value={paidBy} />
-      {members.length > 1 && <input type="hidden" name="split_with" value={splitWith.join(",")} />}
+      {members.length > 1 && (
+        <>
+          {/* 전원을 고르면 '전원'으로 저장 → 나중에 들어온 동행자도 정산에 포함 */}
+          <input type="hidden" name="split_all" value={splitWith.length === members.length ? "1" : "0"} />
+          <input type="hidden" name="split_with" value={splitWith.join(",")} />
+        </>
+      )}
 
       {members.length > 1 && (
         <div className="flex flex-col gap-2">
@@ -121,7 +127,9 @@ export function ExpenseForm({ action, tripCurrency, today, initial, members = []
           <p className="text-xs text-muted">
             {splitWith.length === 1 && splitWith[0] === paidBy
               ? "개인 지출이에요. 정산에서 빠져요."
-              : `${splitWith.length}명이 똑같이 나눠요.`}
+              : splitWith.length === members.length
+                ? "전원이 똑같이 나눠요. 나중에 들어오는 동행자도 포함돼요."
+                : `고른 ${splitWith.length}명만 똑같이 나눠요.`}
           </p>
         </div>
       )}

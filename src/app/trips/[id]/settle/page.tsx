@@ -28,7 +28,7 @@ async function Settle({ id }: { id: string }) {
     getMyUserId(),
   ]);
   const isOwner = trip.user_id === me;
-  const { people, transfers, skipped } = computeSettlement(expenses, records, members.map((m) => m.user_id));
+  const { people, transfers, skipped, excludedByLeft } = computeSettlement(expenses, records, members.map((m) => m.user_id));
 
   const idx = new Map(members.map((m, i) => [m.user_id, i]));
   const nameOf = (uid: string) => members.find((m) => m.user_id === uid)?.display_name ?? "나간 동행자";
@@ -85,6 +85,7 @@ async function Settle({ id }: { id: string }) {
               송금 횟수가 가장 적게 계산했어요. 일부만 보냈다면 보낸 금액만큼 완료로 표시돼요.
               {estimated > 0 && ` 신용카드 예상 금액 ${estimated}건이 포함돼 있어서, 명세서 금액을 넣으면 정산액이 조금 바뀔 수 있어요.`}
               {skipped > 0 && ` 낸 사람이 없는 지출 ${skipped}건은 빠졌어요.`}
+              {excludedByLeft > 0 && ` 나간 동행자가 낸 지출 ${excludedByLeft}건은 빠졌어요(나간 사람 몫은 남은 사람끼리 다시 나눠요).`}
             </p>
           </section>
 
