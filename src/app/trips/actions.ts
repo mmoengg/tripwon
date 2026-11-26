@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrencyCode } from "@/lib/currencies";
+import { getKrwRate, type KrwRate } from "@/lib/rates";
 
 export type TripFormValues = {
   name: string;
@@ -65,4 +66,10 @@ export async function createTrip(
 
   revalidatePath("/");
   redirect("/");
+}
+
+// 새 여행 폼에서 통화를 고를 때 환율 기본값을 채우는 용도. 실패하면 null → 직접 입력
+export async function fetchDefaultRate(currency: string): Promise<KrwRate | null> {
+  if (!isCurrencyCode(currency)) return null;
+  return getKrwRate(currency);
 }

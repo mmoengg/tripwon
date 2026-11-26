@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { createTrip, type TripFormState } from "../actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { createTrip, fetchDefaultRate, type TripFormState } from "../actions";
 import { CURRENCIES } from "@/lib/currencies";
 
 const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
@@ -12,6 +12,30 @@ export function NewTripForm() {
   const v = state.values;
   // select는 비제어(defaultValue)로 두고, "1 JPY =" 표시용으로만 상태를 따로 둠
   const [currency, setCurrency] = useState<string>(v?.currency ?? CURRENCIES[0].code);
+
+  // 환율 칸은 비제어로 두고 ref로 값만 채움 (폼 초기화와 충돌하지 않게)
+  const rateRef = useRef<HTMLInputElement>(null);
+  // 사용자가 직접 고친 뒤에는 자동으로 덮어쓰지 않음. 에러로 돌아온 경우도 사용자 값 유지
+  const rateTouched = useRef(!!v?.rate_krw);
+  const [rateInfo, setRateInfo] = useState<
+    { status: "loading" } | { status: "ok"; updatedAt: string } | { status: "fail" } | null
+  >(null);
+
+  useEffect(() => {
+    if (rateTouched.current) return;
+    let cancelled = false;
+    setRateInfo({ status: "loading" });
+    fetchDefaultRate(currency).then((r) => {
+      if (cancelled || rateTouched.current) return;
+      if (!r) return setRateInfo({ status: "fail" });
+      // 1 미만(VND 등)은 소수 4자리, 나머지는 2자리 — DB는 numeric(12,4)
+      if (rateRef.current) rateRef.current.value = r.rate.toFixed(r.rate < 1 ? 4 : 2);
+      setRateInfo({ status: "ok", updatedAt: r.updatedAt });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currency]);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -26,7 +50,11 @@ export function NewTripForm() {
           id="currency"
           name="currency"
           defaultValue={v?.currency ?? CURRENCIES[0].code}
-          onChange={(e) => setCurrency(e.target.value)}
+          onChange={(e) => {
+            // 통화가 바뀌면 이전 통화 기준 환율은 의미 없음 → 새 기본값으로 다시 채움
+            rateTouched.current = false;
+            setCurrency(e.target.value);
+          }}
           className={`${field} bg-white`}
         >
           {CURRENCIES.map((c) => (
@@ -45,17 +73,33 @@ export function NewTripForm() {
             id="rate_krw"
             name="rate_krw"
             required
+            ref={rateRef}
             inputMode="decimal"
             defaultValue={v?.rate_krw}
+            onInput={() => {
+              rateTouched.current = true;
+              setRateInfo(null);
+            }}
             placeholder="0.00"
             className={`${field} text-right`}
           />
           <span className="shrink-0 text-sm text-neutral-500">원</span>
         </div>
         <p className="text-xs text-neutral-400">
-          {currency === "JPY" || currency === "VND"
-            ? `100 ${currency}가 아니라 1 ${currency} 기준이에요.`
-            : "나중에 언제든 바꿀 수 있어요."}
+          {rateInfo?.status === "loading" && "오늘 환율 불러오는 중…"}
+          {rateInfo?.status === "ok" && (
+            <>
+              {rateInfo.updatedAt} 기준 환율이에요. 직접 고쳐도 돼요.{" "}
+              <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="underline">
+                Rates By Exchange Rate API
+              </a>
+            </>
+          )}
+          {rateInfo?.status === "fail" && "환율을 불러오지 못했어요. 직접 입력해주세요."}
+          {rateInfo === null && "나중에 언제든 바꿀 수 있어요."}
+          {(currency === "JPY" || currency === "VND") && (
+            <span className="block">100 {currency}가 아니라 1 {currency} 기준이에요.</span>
+          )}
         </p>
       </div>
 
