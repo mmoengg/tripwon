@@ -50,7 +50,7 @@ function LoginForm() {
   return (
       <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6">
         <header className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold">여행 경비</h1>
+          <h1 className="text-2xl font-semibold">tripwon</h1>
           <p className="text-sm text-neutral-500">어디서 얼마 썼는지, 원화로 한눈에</p>
         </header>
 
