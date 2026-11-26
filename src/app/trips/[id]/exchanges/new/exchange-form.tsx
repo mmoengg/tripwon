@@ -1,20 +1,22 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createExchange, type ExchangeFormState } from "../../../exchange-actions";
+import type { ExchangeFormState } from "../../../exchange-actions";
 import { formatRate } from "@/lib/format";
 
 const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
 const label = "text-sm font-medium text-neutral-700";
 const toNum = (s: string) => Number(s.replaceAll(",", "").trim());
 
-type Props = { tripId: string; currency: string; today: string };
+type Props = {
+  // 서버 페이지에서 tripId를 bind해서 넘겨줌
+  action: (prev: ExchangeFormState, formData: FormData) => Promise<ExchangeFormState>;
+  currency: string;
+  today: string;
+};
 
-export function ExchangeForm({ tripId, currency, today }: Props) {
-  const [state, formAction, pending] = useActionState<ExchangeFormState, FormData>(
-    createExchange.bind(null, tripId),
-    {},
-  );
+export function ExchangeForm({ action, currency, today }: Props) {
+  const [state, formAction, pending] = useActionState<ExchangeFormState, FormData>(action, {});
   const v = state.values;
   const [kind, setKind] = useState(v?.kind ?? "prepaid");
   // 환율 미리보기용으로만 상태에 담음 (입력 칸 자체는 비제어)

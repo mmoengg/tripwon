@@ -1,9 +1,11 @@
+import { ResetOnLeave } from "@/components/reset-on-leave";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getTrip } from "@/lib/trips";
 import { todayInSeoul } from "@/lib/format";
 import { ExpenseForm } from "./expense-form";
+import { createExpense } from "../../../expense-actions";
 
 export default function NewExpensePage({ params }: PageProps<"/trips/[id]/expenses/new">) {
   return (
@@ -22,7 +24,9 @@ async function NewExpense({ id }: { id: string }) {
     <>
       <Link href={`/trips/${trip.id}`} className="text-sm text-neutral-500">← {trip.name}</Link>
       <h1 className="text-2xl font-semibold">지출 추가</h1>
-      <ExpenseForm tripId={trip.id} tripCurrency={trip.currency} today={todayInSeoul()} />
+      <ResetOnLeave>
+        <ExpenseForm action={createExpense.bind(null, trip.id)} tripCurrency={trip.currency} today={todayInSeoul()} />
+      </ResetOnLeave>
     </>
   );
 }

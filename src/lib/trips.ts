@@ -94,3 +94,27 @@ export async function getExchanges(tripId: string): Promise<ExchangeRow[]> {
     .returns<ExchangeRow[]>();
   return (data ?? []).map((x) => ({ ...x, krw_amount: Number(x.krw_amount), foreign_amount: Number(x.foreign_amount) }));
 }
+
+export type ExpenseRecord = {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  currency: string;
+  paid_where: string;
+  method: string;
+  spent_on: string;
+  amount_krw_actual: number | null;
+};
+
+export async function getExpense(tripId: string, expenseId: string): Promise<ExpenseRecord | null> {
+  if (!UUID_RE.test(expenseId)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("expenses")
+    .select("id, title, category, amount, currency, paid_where, method, spent_on, amount_krw_actual")
+    .eq("id", expenseId)
+    .eq("trip_id", tripId)
+    .maybeSingle<ExpenseRecord>();
+  return data;
+}

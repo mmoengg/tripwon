@@ -1,9 +1,11 @@
+import { ResetOnLeave } from "@/components/reset-on-leave";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getTrip } from "@/lib/trips";
 import { todayInSeoul } from "@/lib/format";
 import { ExchangeForm } from "./exchange-form";
+import { createExchange } from "../../../exchange-actions";
 
 export default function NewExchangePage({ params }: PageProps<"/trips/[id]/exchanges/new">) {
   return (
@@ -25,7 +27,9 @@ async function NewExchange({ id }: { id: string }) {
         <h1 className="text-2xl font-semibold">충전 / 환전</h1>
         <p className="text-sm text-neutral-500">하나머니 충전 내역이나 환전 영수증을 보고 그대로 옮겨 적으면 돼요.</p>
       </div>
-      <ExchangeForm tripId={trip.id} currency={trip.currency} today={todayInSeoul()} />
+      <ResetOnLeave>
+        <ExchangeForm action={createExchange.bind(null, trip.id)} currency={trip.currency} today={todayInSeoul()} />
+      </ResetOnLeave>
     </>
   );
 }

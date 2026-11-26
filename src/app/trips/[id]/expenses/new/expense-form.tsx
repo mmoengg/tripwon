@@ -1,21 +1,27 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createExpense, type ExpenseFormState } from "../../../expense-actions";
+import type { ExpenseFormState, ExpenseFormValues } from "../../../expense-actions";
 import { BOOKING_CATEGORIES, LOCAL_CATEGORIES } from "@/lib/categories";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 
 const field = "h-12 w-full rounded-xl border border-neutral-200 px-4 outline-none focus:border-neutral-400";
 const label = "text-sm font-medium text-neutral-700";
 
-type Props = { tripId: string; tripCurrency: string; today: string };
+type Props = {
+  // 서버 페이지에서 id를 bind해서 넘겨줌 (createExpense 또는 updateExpense)
+  action: (prev: ExpenseFormState, formData: FormData) => Promise<ExpenseFormState>;
+  tripCurrency: string;
+  today: string;
+  // 있으면 수정 모드: 원래 값을 채우고 버튼 문구가 바뀜
+  initial?: ExpenseFormValues;
+};
 
-export function ExpenseForm({ tripId, tripCurrency, today }: Props) {
-  const [state, formAction, pending] = useActionState<ExpenseFormState, FormData>(
-    createExpense.bind(null, tripId),
-    {},
-  );
-  const v = state.values;
+export function ExpenseForm({ action, tripCurrency, today, initial }: Props) {
+  const isEdit = !!initial;
+  const [state, formAction, pending] = useActionState<ExpenseFormState, FormData>(action, {});
+  // 에러로 돌아온 값 > 수정할 원래 값 > 빈 값
+  const v = state.values ?? initial;
 
   // 결제 장소/통화/수단은 서로 연동되는 토글이라 상태로 관리하고 hidden input으로 전송
   const [paidWhere, setPaidWhere] = useState(v?.paid_where ?? "local");
@@ -52,7 +58,7 @@ export function ExpenseForm({ tripId, tripCurrency, today }: Props) {
             name="amount"
             required
             inputMode="decimal"
-            autoFocus
+            autoFocus={!isEdit}
             defaultValue={v?.amount}
             placeholder="0"
             className={`${field} text-right text-lg tabular-nums`}
@@ -93,6 +99,26 @@ export function ExpenseForm({ tripId, tripCurrency, today }: Props) {
         </p>
       </div>
 
+      {method === "credit" && currency !== "KRW" && (
+        <div className="flex flex-col gap-2 rounded-xl bg-neutral-50 p-4">
+          <label htmlFor="amount_krw_actual" className={label}>
+            명세서 실제 금액 <span className="font-normal text-neutral-400">(선택)</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="amount_krw_actual"
+              name="amount_krw_actual"
+              inputMode="numeric"
+              defaultValue={v?.amount_krw_actual}
+              placeholder="카드사 청구 원화"
+              className={`${field} bg-white text-right tabular-nums`}
+            />
+            <span className="shrink-0 text-sm text-neutral-500">원</span>
+          </div>
+          <p className="text-xs text-neutral-400">비워두면 여행 기본 환율로 예상 금액을 계산해요.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="spent_on" className={label}>날짜</label>
@@ -105,7 +131,7 @@ export function ExpenseForm({ tripId, tripCurrency, today }: Props) {
       )}
 
       <button disabled={pending} className="h-12 rounded-xl bg-neutral-900 font-medium text-white disabled:opacity-50">
-        {pending ? "저장 중…" : "저장"}
+        {pending ? "저장 중…" : isEdit ? "수정 저장" : "저장"}
       </button>
     </form>
   );

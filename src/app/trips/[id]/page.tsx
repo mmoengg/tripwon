@@ -69,7 +69,7 @@ async function TripDetail({ id }: { id: string }) {
               </div>
               <ul className="flex flex-col divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
                 {items.map((e) => (
-                  <ExpenseItem key={e.id} e={e} />
+                  <ExpenseItem key={e.id} e={e} tripId={trip.id} />
                 ))}
               </ul>
             </section>
@@ -80,10 +80,14 @@ async function TripDetail({ id }: { id: string }) {
   );
 }
 
-function ExpenseItem({ e }: { e: ExpenseRow }) {
+function ExpenseItem({ e, tripId }: { e: ExpenseRow; tripId: string }) {
   const cat = categoryInfo(e.category);
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
+    <li>
+      <Link
+        href={`/trips/${tripId}/expenses/${e.id}/edit`}
+        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50"
+      >
       <span className="text-xl" aria-hidden>{cat.emoji}</span>
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{e.title}</p>
@@ -101,6 +105,7 @@ function ExpenseItem({ e }: { e: ExpenseRow }) {
           <p className="text-xs text-neutral-400">{formatAmount(e.amount, e.currency)}</p>
         )}
       </div>
+      </Link>
     </li>
   );
 }
